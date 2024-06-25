@@ -1,0 +1,18 @@
+[gd_scene load_steps=4 format=3 uid="uid://colwxwbes7ubn"]
+
+[ext_resource type="Script" path="res://entities/player/bandit.gd" id="1_k55n4"]
+[ext_resource type="PackedScene" uid="uid://co2qduwbi8yak" path="res://entities/player/bandit.glb" id="2_vweob"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_q6h8l"]
+radius = 1.0
+height = 4.0
+
+[node name="Bandit" type="CharacterBody3D"]
+script = ExtResource("1_k55n4")
+
+[node name="bandit" parent="." instance=ExtResource("2_vweob")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(-0.0505929, 0, 0.998719, 0, 1, 0, -0.998719, 0, -0.0505929, 0, 1.75, 0)
+shape = SubResource("CapsuleShape3D_q6h8l")

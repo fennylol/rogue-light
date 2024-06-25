@@ -1,0 +1,45 @@
+[gd_scene load_steps=7 format=3 uid="uid://cpxaw5tb41bbg"]
+
+[ext_resource type="Texture2D" uid="uid://b721owl54xd8b" path="res://world/textures/grass.png" id="1_hdiq4"]
+[ext_resource type="Script" path="res://world/map/world.gd" id="1_ojsoe"]
+[ext_resource type="PackedScene" uid="uid://colwxwbes7ubn" path="res://entities/player/bandit.tscn" id="2_qb25q"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_y77uc"]
+size = Vector3(100.063, 1, 100.075)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h7ega"]
+albedo_texture = ExtResource("1_hdiq4")
+uv1_scale = Vector3(10.075, 10.075, 10.075)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_d328o"]
+material = SubResource("StandardMaterial3D_h7ega")
+size = Vector2(100, 100)
+
+[node name="Node3D" type="Node3D"]
+script = ExtResource("1_ojsoe")
+
+[node name="RigidBody3D" type="StaticBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
+shape = SubResource("BoxShape3D_y77uc")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="RigidBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+mesh = SubResource("PlaneMesh_d328o")
+skeleton = NodePath("../..")
+
+[node name="Bandit" parent="." instance=ExtResource("2_qb25q")]
+
+[node name="camera_man" type="Node3D" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="camera_man"]
+transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, 15.995, 20)
+projection = 1
+current = true
+size = 30.0
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.662104, -0.298368, 0.687455, 0.410846, 0.911705, 9.56159e-09, -0.626756, 0.282438, 0.726227, 3.56301, -1.90735e-06, 2.78375)
+
+[node name="SpotLight3D" type="SpotLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.113567, 0.99353, 0, -0.99353, 0.113567, 10.0077, 6.95519, 11.0928)
