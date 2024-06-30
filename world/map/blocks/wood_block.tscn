@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3 uid="uid://cdu2n8rcruj65"]
+
+[ext_resource type="Texture2D" uid="uid://gmum1e62kg8o" path="res://world/textures/wood.png" id="1_da8ct"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6llw2"]
+resource_name = "5m_block"
+size = Vector3(1, 5, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_031sx"]
+albedo_texture = ExtResource("1_da8ct")
+uv1_scale = Vector3(3, 7.5, 7.5)
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_ma4of"]
+material = SubResource("StandardMaterial3D_031sx")
+size = Vector3(1, 5, 1)
+
+[node name="WoodBlock" type="StaticBody3D"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.5, 0)
+shape = SubResource("BoxShape3D_6llw2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CollisionShape3D"]
+mesh = SubResource("BoxMesh_ma4of")

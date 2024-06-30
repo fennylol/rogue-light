@@ -1,0 +1,25 @@
+[gd_scene load_steps=5 format=3 uid="uid://bft20fr44ckcx"]
+
+[ext_resource type="Texture2D" uid="uid://b721owl54xd8b" path="res://world/textures/grass.png" id="1_t14su"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_6llw2"]
+resource_name = "5m_block"
+size = Vector3(1, 5, 1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_031sx"]
+albedo_texture = ExtResource("1_t14su")
+uv1_scale = Vector3(3, 7.5, 7.5)
+texture_filter = 0
+
+[sub_resource type="BoxMesh" id="BoxMesh_ma4of"]
+material = SubResource("StandardMaterial3D_031sx")
+size = Vector3(1, 5, 1)
+
+[node name="GrassBlock" type="StaticBody3D"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.5, 0)
+shape = SubResource("BoxShape3D_6llw2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CollisionShape3D"]
+mesh = SubResource("BoxMesh_ma4of")
