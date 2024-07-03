@@ -1,10 +1,12 @@
-[gd_scene load_steps=19 format=3 uid="uid://cpxaw5tb41bbg"]
+[gd_scene load_steps=25 format=3 uid="uid://cpxaw5tb41bbg"]
 
 [ext_resource type="Texture2D" uid="uid://b721owl54xd8b" path="res://world/textures/grass.png" id="1_hdiq4"]
 [ext_resource type="Script" path="res://world/map/world.gd" id="1_ojsoe"]
 [ext_resource type="PackedScene" uid="uid://colwxwbes7ubn" path="res://entities/player/bandit.tscn" id="2_qb25q"]
 [ext_resource type="Texture2D" uid="uid://bklq8vqimvafs" path="res://world/textures/stone.png" id="4_o4w1j"]
 [ext_resource type="Texture2D" uid="uid://gmum1e62kg8o" path="res://world/textures/wood.png" id="5_frcqo"]
+[ext_resource type="Texture2D" uid="uid://0s10puhdnhnv" path="res://world/textures/path.png" id="6_8v57l"]
+[ext_resource type="Texture2D" uid="uid://cppxwtapq82jv" path="res://world/textures/water.png" id="7_vdjq1"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_y77uc"]
 size = Vector3(1000, 1, 1000)
@@ -44,6 +46,20 @@ material = SubResource("StandardMaterial3D_pu02d")
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ofslc"]
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3xsg6"]
+albedo_texture = ExtResource("6_8v57l")
+uv1_scale = Vector3(3, 2, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_182ft"]
+material = SubResource("StandardMaterial3D_3xsg6")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dvqtk"]
+albedo_texture = ExtResource("7_vdjq1")
+uv1_scale = Vector3(3, 2, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_lhv6p"]
+material = SubResource("StandardMaterial3D_dvqtk")
+
 [sub_resource type="MeshLibrary" id="MeshLibrary_5ntyi"]
 item/0/name = "grass_1m"
 item/0/mesh = SubResource("BoxMesh_ebtxl")
@@ -63,16 +79,32 @@ item/2/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 item/2/shapes = [SubResource("BoxShape3D_ofslc"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)]
 item/2/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 item/2/navigation_layers = 1
+item/3/name = "path_1m"
+item/3/mesh = SubResource("BoxMesh_182ft")
+item/3/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/3/shapes = []
+item/3/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/3/navigation_layers = 1
+item/4/name = "water_1m"
+item/4/mesh = SubResource("BoxMesh_lhv6p")
+item/4/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/4/shapes = []
+item/4/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+item/4/navigation_layers = 1
 
 [node name="Node3D" type="Node3D"]
 script = ExtResource("1_ojsoe")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+shadow_enabled = true
 
 [node name="Bandit" parent="." instance=ExtResource("2_qb25q")]
 
 [node name="camera_man" type="Node3D" parent="."]
 
 [node name="Camera3D" type="Camera3D" parent="camera_man"]
-transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, 16, 20)
+transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, 160, 225)
 projection = 1
 current = true
 size = 20.0
@@ -89,16 +121,6 @@ shape = SubResource("BoxShape3D_y77uc")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 mesh = SubResource("PlaneMesh_d328o")
 skeleton = NodePath("../../..")
-
-[node name="lights" type="Node3D" parent="world_parts"]
-
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="world_parts"]
-transform = Transform3D(0.662104, -0.298368, 0.687455, 0.410846, 0.911705, 5.74958e-07, -0.626756, 0.282438, 0.726227, 3.56301, -1.90735e-06, 2.78375)
-
-[node name="SpotLight3D" type="SpotLight3D" parent="world_parts"]
-transform = Transform3D(1, 0, 0, 0, 0.113567, 0.99353, 0, -0.99353, 0.113567, 0.010555, 7.92857, -0.0399075)
-spot_range = 12.8222
-spot_angle = 31.1952
 
 [node name="GridMap" type="GridMap" parent="world_parts"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, -0.5)

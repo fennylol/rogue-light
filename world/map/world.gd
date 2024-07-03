@@ -1,5 +1,6 @@
 extends Node3D
 const WORLD_TILE_LIST = preload("res://world/map/world_tile_list.gd")
+const NoiseMachine = preload("res://world/map/noise_machine.gd")
 @onready var PLAYER = $Bandit as CharacterBody3D
 @onready var CAMERA = $camera_man as Node3D
 @onready var MAP_GRID = $world_parts/GridMap as GridMap
@@ -18,12 +19,11 @@ const WORLD_TILE_LIST = preload("res://world/map/world_tile_list.gd")
 #       |       |       #
 #       |       |       #
 # # # # # # # # # # # # #
-
-
 const CHUNK_SIZE = 16
-const CHUNK_COUNT = 4
-const PATH_RADIUS = 1
-
+const CHUNK_COUNT = 16
+const PATH_RADIUS = 2
+var NOISE_MACHINE = NoiseMachine.new()
+var generating = false
 
 ### CAMERA PARAMETERS ###
 const CAM_MAX_RANGE = 10
@@ -39,6 +39,10 @@ func _process(delta):
 	var lerp_speed_x = ((diff_x/CAM_MAX_RANGE)**2.0)*delta
 	CAMERA.position.x = lerpf(CAMERA.position.x, PLAYER.position.x, lerp_speed_x)  
 	
+	var diff_y = abs(CAMERA.position.y - PLAYER.position.y)
+	var lerp_speed_y = (diff_y**2.0)*delta
+	CAMERA.position.y = lerpf(CAMERA.position.y, PLAYER.position.y, lerp_speed_y)
+	
 	var diff_z = abs(CAMERA.position.z - PLAYER.position.z)
 	var lerp_speed_z = ((diff_z/CAM_MAX_RANGE)**2.0)*delta
 	CAMERA.position.z = lerpf(CAMERA.position.z, PLAYER.position.z, lerp_speed_z)
@@ -49,29 +53,81 @@ func _process(delta):
 		PLAYER.rotation.y += direction.x * delta
 		CAMERA.rotation.y += direction.x * delta
 		CAMERA.get_child(0).size += direction.z 
+	
+	if Input.is_action_just_pressed("DEV_refresh"): generate_map()
+		#NOISE_MACHINE.start(NOISE_MACHINE._run.bind(CHUNK_COUNT*CHUNK_SIZE,CHUNK_COUNT*CHUNK_SIZE,10))
+		#generating = true
+	#
+	#if generating: 
+		#if not NOISE_MACHINE.is_alive(): 
+			#generate_map_asynch(NOISE_MACHINE.wait_to_finish())
+			#generating = false
 
 
 
 
 func _ready():
+	generate_map()
+
+
+func generate_map():
 	MAP_GRID.clear()
-	for chunk_x in CHUNK_COUNT:
-		for chunk_y in CHUNK_COUNT:
-			generate_chunk(chunk_x*CHUNK_SIZE, chunk_y*CHUNK_SIZE)
-	#generate_full_path()
+	generate_chunks()
 	generate_directed_path()
+	center_player()
+	
+func generate_map_asynch(heightmap):
+	MAP_GRID.clear()
+	generate_chunks(heightmap)
+	generate_directed_path()
+	center_player()
+
+func _on_map_generation_finished():
+	pass
+
+func center_player():
 	var midpoint = CHUNK_COUNT/2.0 * CHUNK_SIZE
-	PLAYER.position += Vector3(midpoint, 0, midpoint)
-	CAMERA.position += Vector3(midpoint, 0, midpoint)
+	var i = -1
+	while MAP_GRID.get_cell_item(Vector3i(midpoint,i,midpoint)) == -1: i+=1
+	PLAYER.position = Vector3(midpoint, i+1, midpoint)
+	CAMERA.position = Vector3(midpoint, i+1, midpoint)
 
 
 
-func generate_chunk(chunk_x_offset, chunk_y_offset):
-	for x in CHUNK_SIZE:
-		for y in CHUNK_SIZE:
-			if ((chunk_x_offset+chunk_y_offset)/CHUNK_SIZE) % 2 == 0: set_tile(x+chunk_x_offset, y+chunk_y_offset, "GRASS")
-			else: set_tile(x+chunk_x_offset, y+chunk_y_offset, "WOOD")
-	#generate_path(chunk_x_offset, chunk_y_offset)
+# function created with the help of claude AI, availible at claude.ai 
+func generate_noise_heightmap(width: int, height: int, max_height: int, seed: int = randi(), frequency: float = 0.005, lacunarity: float = 2.0, gain: float = 0.5) -> Array:
+	var noise = FastNoiseLite.new()
+	noise.set_seed(seed)
+	noise.set_noise_type(FastNoiseLite.TYPE_SIMPLEX) 
+	noise.set_frequency(frequency)
+	noise.set_fractal_lacunarity(lacunarity)
+	noise.set_fractal_gain(gain)
+	noise.set_fractal_type(FastNoiseLite.FRACTAL_RIDGED)
+	
+	var heightmap = []
+	for x in range(width):
+		var row = []
+		for y in range(height):
+			var noise_value = noise.get_noise_2d(x, y)
+			# Convert noise value (-1 to 1) to (0 to 1) range
+			var t = (noise_value + 1) * 0.5
+			# Discretize to 6 levels (0 to 5)
+			var height_value = int(round(t * max_height))
+			row.append(height_value)
+		heightmap.append(row)
+	return heightmap
+
+
+func generate_chunks(height_map: Array = [], show_chunks: bool = false):
+	var hm = generate_noise_heightmap(CHUNK_COUNT*CHUNK_SIZE,CHUNK_COUNT*CHUNK_SIZE,10) if height_map == [] else height_map
+	for i in hm.size():
+		for j in hm[i].size():
+			if show_chunks: set_column(i,j,hm[i][j],"GRASS" if (i/CHUNK_SIZE + j/CHUNK_SIZE)%2 == 0 else "WOOD")
+			else: 
+				if i == 0 or j == 0 or i == hm.size()-1 or j == hm[i].size()-1: 
+					set_column(i,j,hm[i][j],"GRASS" if hm[i][j] > 4 else "WOOD")
+				else:
+					set_tile_z(i,j,hm[i][j],"GRASS" if hm[i][j] > 4 else "WOOD")
 
 
 func generate_full_path():
@@ -276,18 +332,28 @@ func set_tile(x, y, type):
 func set_tile_z(x, y, z, type): 
 	MAP_GRID.set_cell_item(Vector3(x, z, y), WORLD_TILE_LIST.TILE_NAMES[type], 0)
 
+func set_top_tile(x, y, type): 
+	var i = -1
+	while MAP_GRID.get_cell_item(Vector3i(x,i,y)) == -1 or MAP_GRID.get_cell_item(Vector3i(x,i+1,y)) != -1: i+=1
+	MAP_GRID.set_cell_item(Vector3(x, i, y), WORLD_TILE_LIST.TILE_NAMES[type], 0)
 
 
-func make_path(x, y):
-	var i_min = 0 if x % CHUNK_SIZE == 0 else 1-PATH_RADIUS
-	var j_min = 0 if y % CHUNK_SIZE == 0 else 1-PATH_RADIUS
-	var i_max = 1 if (x+1) % CHUNK_SIZE == 0 else PATH_RADIUS
-	var j_max = 1 if (y+1) % CHUNK_SIZE == 0 else PATH_RADIUS
+func set_column(x, y, z, type): 
+	var i = 0
+	while i != z+1:
+		MAP_GRID.set_cell_item(Vector3(x, i, y), WORLD_TILE_LIST.TILE_NAMES[type], 0)
+		i += 1
+
+func set_path(x, y):
+	var i_min = 0 if x % (CHUNK_SIZE*CHUNK_COUNT) == 0 else 1-PATH_RADIUS
+	var j_min = 0 if y % (CHUNK_SIZE*CHUNK_COUNT) == 0 else 1-PATH_RADIUS
+	var i_max = 1 if (x+1) % (CHUNK_SIZE*CHUNK_COUNT) == 0 else PATH_RADIUS
+	var j_max = 1 if (y+1) % (CHUNK_SIZE*CHUNK_COUNT) == 0 else PATH_RADIUS
 	
 	# -1..1 unless on the edge of a chunk.
 	for i in range(i_min, i_max):
 		for j in range(j_min, j_max):
-			set_tile(x+i, y+j, "STONE")
+			set_top_tile(x+i, y+j, "STONE")
 
 
 # this section of code is adapted from the work of Alois Zingl
@@ -304,7 +370,7 @@ func plotLine(x0, y0, x1, y1):
 	var e2
 	
 	while true:
-		make_path(x0 as int, y0 as int)
+		set_path(x0 as int, y0 as int)
 		e2 = 2*err
 		
 		if e2 >= dy:
@@ -361,7 +427,7 @@ func plotQuadBezierSeg(x0, y0, x1, y1, x2, y2):
 		yy += yy
 		err = dx+dy+xy
 		
-		make_path(x0 as int, y0 as int)
+		set_path(x0 as int, y0 as int)
 		if x0 == x2 and y0 == y2: return true
 		y1 = 2*err < dx
 		if 2*err > dy:
@@ -375,7 +441,7 @@ func plotQuadBezierSeg(x0, y0, x1, y1, x2, y2):
 			dx += xx
 			err += dx
 		while dy < 0 and dx > 0:
-			make_path(x0 as int, y0 as int)
+			set_path(x0 as int, y0 as int)
 			if x0 == x2 and y0 == y2: return true
 			y1 = 2*err < dx
 			if 2*err > dy:
