@@ -1,12 +1,9 @@
-[gd_scene load_steps=25 format=3 uid="uid://cpxaw5tb41bbg"]
+[gd_scene load_steps=8 format=3 uid="uid://cpxaw5tb41bbg"]
 
 [ext_resource type="Texture2D" uid="uid://b721owl54xd8b" path="res://world/textures/grass.png" id="1_hdiq4"]
 [ext_resource type="Script" path="res://world/map/world.gd" id="1_ojsoe"]
 [ext_resource type="PackedScene" uid="uid://colwxwbes7ubn" path="res://entities/player/bandit.tscn" id="2_qb25q"]
-[ext_resource type="Texture2D" uid="uid://bklq8vqimvafs" path="res://world/textures/stone.png" id="4_o4w1j"]
-[ext_resource type="Texture2D" uid="uid://gmum1e62kg8o" path="res://world/textures/wood.png" id="5_frcqo"]
-[ext_resource type="Texture2D" uid="uid://0s10puhdnhnv" path="res://world/textures/path.png" id="6_8v57l"]
-[ext_resource type="Texture2D" uid="uid://cppxwtapq82jv" path="res://world/textures/water.png" id="7_vdjq1"]
+[ext_resource type="MeshLibrary" uid="uid://dxw4swdbv05fa" path="res://world/map/1m_tiles.tres" id="4_fhid5"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_y77uc"]
 size = Vector3(1000, 1, 1000)
@@ -18,79 +15,6 @@ uv1_scale = Vector3(300, 300, 300)
 [sub_resource type="PlaneMesh" id="PlaneMesh_d328o"]
 material = SubResource("StandardMaterial3D_h7ega")
 size = Vector2(1000, 1000)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_2dh0n"]
-albedo_texture = ExtResource("1_hdiq4")
-uv1_scale = Vector3(3, 2, 3)
-
-[sub_resource type="BoxMesh" id="BoxMesh_ebtxl"]
-material = SubResource("StandardMaterial3D_2dh0n")
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_65q5v"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7ny32"]
-albedo_texture = ExtResource("4_o4w1j")
-uv1_scale = Vector3(3, 2, 3.165)
-
-[sub_resource type="BoxMesh" id="BoxMesh_r6gp4"]
-material = SubResource("StandardMaterial3D_7ny32")
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_2hdxr"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pu02d"]
-albedo_texture = ExtResource("5_frcqo")
-uv1_scale = Vector3(3, 2, 3)
-
-[sub_resource type="BoxMesh" id="BoxMesh_d1cj0"]
-material = SubResource("StandardMaterial3D_pu02d")
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_ofslc"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3xsg6"]
-albedo_texture = ExtResource("6_8v57l")
-uv1_scale = Vector3(3, 2, 1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_182ft"]
-material = SubResource("StandardMaterial3D_3xsg6")
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dvqtk"]
-albedo_texture = ExtResource("7_vdjq1")
-uv1_scale = Vector3(3, 2, 1)
-
-[sub_resource type="BoxMesh" id="BoxMesh_lhv6p"]
-material = SubResource("StandardMaterial3D_dvqtk")
-
-[sub_resource type="MeshLibrary" id="MeshLibrary_5ntyi"]
-item/0/name = "grass_1m"
-item/0/mesh = SubResource("BoxMesh_ebtxl")
-item/0/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-item/0/shapes = [SubResource("BoxShape3D_65q5v"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)]
-item/0/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-item/0/navigation_layers = 1
-item/1/name = "stone_1m"
-item/1/mesh = SubResource("BoxMesh_r6gp4")
-item/1/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-item/1/shapes = [SubResource("BoxShape3D_2hdxr"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)]
-item/1/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-item/1/navigation_layers = 1
-item/2/name = "wood_1m"
-item/2/mesh = SubResource("BoxMesh_d1cj0")
-item/2/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-item/2/shapes = [SubResource("BoxShape3D_ofslc"), Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)]
-item/2/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-item/2/navigation_layers = 1
-item/3/name = "path_1m"
-item/3/mesh = SubResource("BoxMesh_182ft")
-item/3/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-item/3/shapes = []
-item/3/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-item/3/navigation_layers = 1
-item/4/name = "water_1m"
-item/4/mesh = SubResource("BoxMesh_lhv6p")
-item/4/mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-item/4/shapes = []
-item/4/navigation_mesh_transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-item/4/navigation_layers = 1
 
 [node name="Node3D" type="Node3D"]
 script = ExtResource("1_ojsoe")
@@ -124,7 +48,7 @@ skeleton = NodePath("../../..")
 
 [node name="GridMap" type="GridMap" parent="world_parts"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, -0.5)
-mesh_library = SubResource("MeshLibrary_5ntyi")
+mesh_library = ExtResource("4_fhid5")
 cell_size = Vector3(1, 1, 1)
 data = {
 "cells": PackedInt32Array(65536, 65519, 2, 131057, 0, 2, 131056, 0, 2, 131055, 0, 2, 65536, 65521, 2, 65536, 65520, 2, 327680, 0, 2, 393216, 0, 2, 131071, 0, 2, 65536, 65535, 2, 131071, 2, 2, 131071, 4, 2, 131071, 6, 2, 131071, 8, 2, 131071, 10, 2, 131071, 12, 2, 131071, 14, 2, 131071, 16, 2, 65538, 65535, 2, 65540, 65535, 2, 65542, 65535, 2, 65544, 65535, 2, 65546, 65535, 2, 65548, 65535, 2, 65550, 65535, 2, 65552, 65535, 2)

@@ -46,7 +46,6 @@ func _physics_process(delta):
 	
 
 	var col_data = move_and_collide(velocity*delta, true)
-	if col_data != null: print(col_data.get_normal()) 
 	if col_data != null && col_data.get_normal().y == 0 && velocity.y == 0: velocity.y = JUMP_VELOCITY 
 	move_and_slide()
 	
