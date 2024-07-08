@@ -5,9 +5,9 @@
 
 [sub_resource type="SphereMesh" id="SphereMesh_un3lm"]
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_q6h8l"]
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_q464k"]
+height = 3.0
 radius = 1.0
-height = 4.0
 
 [node name="Bandit" type="CharacterBody3D"]
 transform = Transform3D(0.45, 0, 0, 0, 0.45, 0, 0, 0, 0.45, 0, 0, 0)
@@ -33,5 +33,5 @@ emission_box_extents = Vector3(2, 0, 1)
 gravity = Vector3(0, 5, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
-transform = Transform3D(-0.0505929, 0, 0.998719, 0, 1, 0, -0.998719, 0, -0.0505929, 0, 1.75, 0)
-shape = SubResource("CapsuleShape3D_q6h8l")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
+shape = SubResource("CylinderShape3D_q464k")

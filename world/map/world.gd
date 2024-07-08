@@ -3,6 +3,7 @@ const WORLD_TILE_LIST = preload("res://world/map/world_tile_list.gd")
 const WorldBuilder = preload("res://world/map/world_builder.gd")
 @onready var PLAYER = $Bandit as CharacterBody3D
 @onready var CAMERA = $camera_man as Node3D
+@onready var GUI = $Gui
 @onready var WORLD = $world_parts as Node3D
 @onready var MAP_GRID = $world_parts/GridMap as GridMap
 
@@ -10,7 +11,7 @@ const WorldBuilder = preload("res://world/map/world_builder.gd")
 # # # # # # # # # # # # #
 # + > X |       |       #
 # v     |       |       #
-# z     |       |       #
+# Z     |       |       #
 # - - - + - - - + - - - #
 #       |       |       #
 #       |       |       #
@@ -22,7 +23,7 @@ const WorldBuilder = preload("res://world/map/world_builder.gd")
 # # # # # # # # # # # # #
 const CHUNK_SIZE = 16
 const CHUNK_COUNT = 16
-const MAX_HEIGHT = 10
+const MAX_HEIGHT = 15
 const PATH_RADIUS = 2
 const PATH_TILE = "PATH"
 var WORLD_BUILDER = WorldBuilder.new(CHUNK_COUNT, CHUNK_SIZE, MAX_HEIGHT, PATH_RADIUS, PATH_TILE)
@@ -32,23 +33,23 @@ var generating = false
 const CAM_MAX_RANGE = 10
 var tracking = false
 
-
+### TIME ###
+enum {AM, PM}
+var TIME = [12, 0, AM]
+var time_since_tick = 0
+const IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS = .1
 
 
 
 # camera tracking
 func _process(delta):
-	var diff_x = abs(CAMERA.position.x - PLAYER.position.x)
-	var lerp_speed_x = ((diff_x/CAM_MAX_RANGE)**2.0)*delta
-	CAMERA.position.x = lerpf(CAMERA.position.x, PLAYER.position.x, lerp_speed_x)  
+	move_camera(delta)
 	
-	var diff_y = abs(CAMERA.position.y - PLAYER.position.y)
-	var lerp_speed_y = (diff_y**2.0)*delta
-	CAMERA.position.y = lerpf(CAMERA.position.y, PLAYER.position.y, lerp_speed_y)
+	time_since_tick += delta
+	if time_since_tick > IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS: 
+		time_since_tick -= IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS
+		update_time()
 	
-	var diff_z = abs(CAMERA.position.z - PLAYER.position.z)
-	var lerp_speed_z = ((diff_z/CAM_MAX_RANGE)**2.0)*delta
-	CAMERA.position.z = lerpf(CAMERA.position.z, PLAYER.position.z, lerp_speed_z)
 	
 	var input_dir = Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
@@ -63,6 +64,12 @@ func _process(delta):
 		WORLD_BUILDER.generate_map()
 
 
+
+func update_time():
+	TIME[1] = (TIME[1] + 1) % 60
+	if not TIME[1]: TIME[0] = ((TIME[0] + 1) % 12)
+	if not (TIME[0] or TIME[1]): TIME[2] = (TIME[2] + 1) % 2
+	GUI.update_display(TIME)
 
 
 func _ready():
@@ -86,6 +93,23 @@ func center_player():
 	while MAP_GRID.get_cell_item(Vector3i(midpoint,i,midpoint)) == -1: i+=1
 	PLAYER.position = Vector3(midpoint, i+1, midpoint)
 	CAMERA.position = Vector3(midpoint, i+1, midpoint)
+
+
+func move_camera(delta):
+	var diff_x = abs(CAMERA.position.x - PLAYER.position.x)
+	var lerp_speed_x = ((diff_x/CAM_MAX_RANGE)**2.0)*delta
+	CAMERA.position.x = lerpf(CAMERA.position.x, PLAYER.position.x, lerp_speed_x)  
+	
+	var diff_y = abs(CAMERA.position.y - PLAYER.position.y)
+	var lerp_speed_y = (diff_y**2.0)*delta
+	CAMERA.position.y = lerpf(CAMERA.position.y, PLAYER.position.y, lerp_speed_y)
+	
+	var diff_z = abs(CAMERA.position.z - PLAYER.position.z)
+	var lerp_speed_z = ((diff_z/CAM_MAX_RANGE)**2.0)*delta
+	CAMERA.position.z = lerpf(CAMERA.position.z, PLAYER.position.z, lerp_speed_z)
+
+
+
 
 
 

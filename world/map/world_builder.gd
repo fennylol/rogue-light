@@ -70,10 +70,15 @@ func generate_chunks(height_map: Array = [], show_chunks: bool = false):
 		for j in hm[i].size():
 			if show_chunks: set_column(i,j,hm[i][j],"GRASS" if (i/CHUNK_SIZE + j/CHUNK_SIZE)%2 == 0 else "WOOD")
 			else: 
+				var type =  "SNOW" if hm[i][j] > 3*MAX_HEIGHT/4 else \
+							"GRASS" if hm[i][j] > MAX_HEIGHT/2 else \
+							"WOOD" if hm[i][j] > MAX_HEIGHT/4 else \
+							"WATER"
+				
 				if i == 0 or j == 0 or i == hm.size()-1 or j == hm[i].size()-1: 
-					set_column(i,j,hm[i][j],"GRASS" if hm[i][j] > MAX_HEIGHT/2 else "WOOD")
+					set_column(i,j,hm[i][j],type)
 				else:
-					set_tile(i,j,hm[i][j],"GRASS" if hm[i][j] > MAX_HEIGHT/2 else "WOOD")
+					set_tile(i,j,hm[i][j],type)
 
 
 

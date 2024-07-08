@@ -2,26 +2,27 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://buh3fa4ve6u27"
-path="res://.godot/imported/body.png-ae6dfcc5313b8dc99045b0de983d8c3b.ctex"
+uid="uid://36wew7or8iu2"
+path.s3tc="res://.godot/imported/snow.png-9d9bf579f4c1d7081126b7e463da8dee.s3tc.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc"],
+"vram_texture": true
 }
 
 [deps]
 
-source_file="res://RAW_RESOURCES_/blends/body.png"
-dest_files=["res://.godot/imported/body.png-ae6dfcc5313b8dc99045b0de983d8c3b.ctex"]
+source_file="res://world/textures/snow.png"
+dest_files=["res://.godot/imported/snow.png-9d9bf579f4c1d7081126b7e463da8dee.s3tc.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0
-mipmaps/generate=false
+mipmaps/generate=true
 mipmaps/limit=-1
 roughness/mode=0
 roughness/src_normal=""
@@ -31,4 +32,4 @@ process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
-detect_3d/compress_to=1
+detect_3d/compress_to=0

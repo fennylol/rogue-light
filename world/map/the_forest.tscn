@@ -1,9 +1,10 @@
-[gd_scene load_steps=8 format=3 uid="uid://cpxaw5tb41bbg"]
+[gd_scene load_steps=9 format=3 uid="uid://cpxaw5tb41bbg"]
 
 [ext_resource type="Texture2D" uid="uid://b721owl54xd8b" path="res://world/textures/grass.png" id="1_hdiq4"]
 [ext_resource type="Script" path="res://world/map/world.gd" id="1_ojsoe"]
 [ext_resource type="PackedScene" uid="uid://colwxwbes7ubn" path="res://entities/player/bandit.tscn" id="2_qb25q"]
 [ext_resource type="MeshLibrary" uid="uid://dxw4swdbv05fa" path="res://world/map/1m_tiles.tres" id="4_fhid5"]
+[ext_resource type="PackedScene" uid="uid://83cqsdl8tpcn" path="res://world/GUI n menus/GUI.tscn" id="5_wo31t"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_y77uc"]
 size = Vector3(1000, 1, 1000)
@@ -54,3 +55,5 @@ data = {
 "cells": PackedInt32Array(65536, 65519, 2, 131057, 0, 2, 131056, 0, 2, 131055, 0, 2, 65536, 65521, 2, 65536, 65520, 2, 327680, 0, 2, 393216, 0, 2, 131071, 0, 2, 65536, 65535, 2, 131071, 2, 2, 131071, 4, 2, 131071, 6, 2, 131071, 8, 2, 131071, 10, 2, 131071, 12, 2, 131071, 14, 2, 131071, 16, 2, 65538, 65535, 2, 65540, 65535, 2, 65542, 65535, 2, 65544, 65535, 2, 65546, 65535, 2, 65548, 65535, 2, 65550, 65535, 2, 65552, 65535, 2)
 }
 metadata/_editor_floor_ = Vector3(0, 1, 0)
+
+[node name="Gui" parent="." instance=ExtResource("5_wo31t")]
