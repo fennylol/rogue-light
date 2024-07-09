@@ -1,5 +1,11 @@
 extends Thread
-
+### WISHLIST ###
+# change to cubic bezier
+# trees
+# smarter generation 
+# - create world as one block
+# - using hightmap, go through and paint biomes
+# fix vertical gaps
 
 const WORLD_TILE_LIST = preload("res://world/map/world_tile_list.gd")
 var CHUNK_SIZE
@@ -41,9 +47,9 @@ func generate_map():
 	finished.emit()
 
 # function created with the help of claude AI, availible at claude.ai 
-func generate_noise_heightmap(width: int, height: int, max_height: int, seed: int = randi(), frequency: float = 0.005, lacunarity: float = 2.0, gain: float = 0.5) -> Array:
+func generate_noise_heightmap(width: int, height: int, max_height: int, noise_seed: int = randi(), frequency: float = 0.005, lacunarity: float = 2.0, gain: float = 0.5) -> Array:
 	var noise = FastNoiseLite.new()
-	noise.set_seed(seed)
+	noise.set_seed(noise_seed)
 	noise.set_noise_type(FastNoiseLite.TYPE_SIMPLEX) 
 	noise.set_frequency(frequency)
 	noise.set_fractal_lacunarity(lacunarity)
@@ -72,13 +78,14 @@ func generate_chunks(height_map: Array = [], show_chunks: bool = false):
 			else: 
 				var type =  "SNOW" if hm[i][j] > 3*MAX_HEIGHT/4 else \
 							"GRASS" if hm[i][j] > MAX_HEIGHT/2 else \
-							"WOOD" if hm[i][j] > MAX_HEIGHT/4 else \
-							"WATER"
+							"GRASS" if hm[i][j] > MAX_HEIGHT/4 else \
+							"WOOD"
 				
 				if i == 0 or j == 0 or i == hm.size()-1 or j == hm[i].size()-1: 
 					set_column(i,j,hm[i][j],type)
 				else:
 					set_tile(i,j,hm[i][j],type)
+					set_tile(i,j,hm[i][j]-1,type)
 
 
 
@@ -362,5 +369,5 @@ func plotQuadBezier(x0, y0, x1, y1, x2, y2, tile):
 		y0 = y1
 	plotQuadBezierSeg(x0,y0,x1,y1,x2,y2,tile)
 
-func plotFullBezier(points):
-	pass
+#func plotFullBezier(points):
+	#pass

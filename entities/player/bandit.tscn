@@ -4,6 +4,8 @@
 [ext_resource type="PackedScene" uid="uid://co2qduwbi8yak" path="res://entities/player/bandit.glb" id="2_vweob"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_un3lm"]
+radius = 0.25
+height = 0.5
 
 [sub_resource type="CylinderShape3D" id="CylinderShape3D_q464k"]
 height = 3.0
@@ -18,7 +20,7 @@ script = ExtResource("1_k55n4")
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 0)
 
 [node name="SpotLight3D" type="SpotLight3D" parent="bandit"]
-transform = Transform3D(-4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, 0.75, 2.5, 0)
+transform = Transform3D(-4.37114e-08, 0.422618, -0.906308, 0, 0.906308, 0.422618, 1, 1.84732e-08, -3.9616e-08, 1.125, 2.5, 0)
 spot_range = 16.5616
 spot_angle = 31.1952
 
