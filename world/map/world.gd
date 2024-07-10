@@ -14,6 +14,9 @@ const WorldBuilder = preload("res://world/map/world_builder.gd")
 @onready var MAP_GRID = $world_parts/GridMap as GridMap
 @onready var LIGHTS = $world_parts/lights as Node3D
 
+
+@onready var test_tree = $Redwood
+@onready var test_tree2 = $Redwood2
 ### WORLD GEN PARAMETERS ###
 # # # # # # # # # # # # #
 # + > X |       |       #
@@ -28,9 +31,9 @@ const WorldBuilder = preload("res://world/map/world_builder.gd")
 #       |       |       #
 #       |       |       #
 # # # # # # # # # # # # #
-const CHUNK_SIZE = 16
-const CHUNK_COUNT = 32
-const MAX_HEIGHT = 20
+const CHUNK_SIZE = 8
+const CHUNK_COUNT = 8
+const MAX_HEIGHT = 10
 const PATH_RADIUS = 2
 const PATH_TILE = "PATH"
 var WORLD_BUILDER = WorldBuilder.new(CHUNK_COUNT, CHUNK_SIZE, MAX_HEIGHT, PATH_RADIUS, PATH_TILE)
@@ -71,9 +74,18 @@ func _process(delta):
 	if time_since_tick > IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS: 
 		time_since_tick -= IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS
 		process_world_tick()
-
+	
 	process_dev_commands(delta)
-
+	
+	var material: ShaderMaterial = test_tree.get_surface_override_material(0)
+	if material:
+		material.set_shader_parameter("player_position", PLAYER.global_transform.origin)
+		material.set_shader_parameter("camera_position", CAMERA.get_child(0).global_transform.origin)
+	
+	material = test_tree2.get_surface_override_material(0)
+	if material:
+		material.set_shader_parameter("player_position", PLAYER.global_transform.origin)
+		material.set_shader_parameter("camera_position", CAMERA.get_child(0).global_transform.origin)
 
 
 func _on_map_generation_finished():

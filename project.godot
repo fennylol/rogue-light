@@ -15,6 +15,10 @@ run/main_scene="res://world/map/the_forest.tscn"
 config/features=PackedStringArray("4.2", "Forward Plus")
 config/icon="res://icon.svg"
 
+[filesystem]
+
+import/fbx/enabled=false
+
 [input]
 
 ui_left={

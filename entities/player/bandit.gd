@@ -34,7 +34,7 @@ func _physics_process(delta):
 	if direction:
 		velocity.x = direction.x * SPEED
 		velocity.z = direction.z * SPEED
-		var angle = atan2(-last_direction.z, last_direction.x) + (2*PI if atan2(-last_direction.z, last_direction.x) < 0 else 0)
+		var angle = atan2(-last_direction.z, last_direction.x) + (2*PI if atan2(-last_direction.z, last_direction.x) < 0 else 0.0)
 		var theta_delta = angle - MESH.rotation.y
 		if abs(theta_delta) > PI: MESH.rotation.y += 2 * PI * (abs(theta_delta)/theta_delta)
 		MESH.rotation.y = move_toward(MESH.rotation.y, angle, delta*ROTATION_SPEED)

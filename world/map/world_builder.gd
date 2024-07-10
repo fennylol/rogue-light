@@ -7,7 +7,7 @@ extends Thread
 # - using hightmap, go through and paint biomes
 # fix vertical gaps
 
-const WORLD_TILE_LIST = preload("res://world/map/world_tile_list.gd")
+const TILES = preload("res://world/map/world_tile_list.gd").TILE_NAMES
 var CHUNK_SIZE
 var CHUNK_COUNT
 var MAX_HEIGHT
@@ -39,12 +39,45 @@ func stop_thread():
 	wait_to_finish()
 	free()
 
-
 func generate_map():
 	MAP_GRID.clear()
 	generate_chunks()
+	generate_forest()
 	generate_directed_path()
 	finished.emit()
+
+
+# i believe in Z-UP cry about it
+func set_tile(x, y, z, type, rot = 0): 
+	mutex.lock()
+	MAP_GRID.set_cell_item(Vector3(x, z, y), TILES[type], rot)
+	mutex.unlock()
+
+func set_top_tile(x, y, type): 
+	var i = 0
+	while ((MAP_GRID.get_cell_item(Vector3i(x,i,y)) == -1 \
+			or MAP_GRID.get_cell_item(Vector3i(x,i+1,y)) != -1) \
+			and i <= MAX_HEIGHT): i+=1
+	#MAP_GRID.set_cell_item(Vector3(x, i, y), WORLD_TILE_LIST.TILE_NAMES[type], 0)
+	set_tile(x, y, i, type)
+
+func set_column(x, y, z, type): 
+	var i = 0
+	while i != z+1:
+		MAP_GRID.set_cell_item(Vector3(x, i, y), TILES[type], 0)
+		i += 1
+
+func set_path(x, y, type):
+	var i_min = 0 if x % (CHUNK_SIZE*CHUNK_COUNT) == 0 else 1-PATH_RADIUS
+	var j_min = 0 if y % (CHUNK_SIZE*CHUNK_COUNT) == 0 else 1-PATH_RADIUS
+	var i_max = 1 if (x+1) % (CHUNK_SIZE*CHUNK_COUNT) == 0 else PATH_RADIUS
+	var j_max = 1 if (y+1) % (CHUNK_SIZE*CHUNK_COUNT) == 0 else PATH_RADIUS
+	
+	# -1..1 unless on the edge of a chunk.
+	for i in range(i_min, i_max):
+		for j in range(j_min, j_max):
+			set_top_tile(x+i, y+j, type)
+			set_tile(x+i, y+j, heightmap[x+i][y+j]+1,"AIR")
 
 # function created with the help of claude AI, availible at claude.ai 
 func generate_noise_heightmap(width: int, height: int, max_height: int, noise_seed: int = randi(), frequency: float = 0.005, lacunarity: float = 2.0, gain: float = 0.5) -> Array:
@@ -190,41 +223,30 @@ func extend_path(chunk_coords, block_coords, dir):
 
 
 
-#func set_tile(x, y, type): 
-	#MAP_GRID.set_cell_item(Vector3(x, 0, y), WORLD_TILE_LIST.TILE_NAMES[type], 0)
 
-# i believe in Z-UP cry about it
-func set_tile(x, y, z, type): 
-	mutex.lock()
-	MAP_GRID.set_cell_item(Vector3(x, z, y), WORLD_TILE_LIST.TILE_NAMES[type], 0)
-	mutex.unlock()
-
-func set_top_tile(x, y, type): 
-	var i = 0
-	while ((MAP_GRID.get_cell_item(Vector3i(x,i,y)) == -1 \
-			or MAP_GRID.get_cell_item(Vector3i(x,i+1,y)) != -1) \
-			and i <= MAX_HEIGHT): i+=1
-	#MAP_GRID.set_cell_item(Vector3(x, i, y), WORLD_TILE_LIST.TILE_NAMES[type], 0)
-	set_tile(x, y, i, type)
+func generate_forest(): 
+	for i in heightmap.size():
+		for j in heightmap[i].size():
+			var Z = heightmap[i][j]+1
+			if not randi_range(0,100):
+				var rot_i = [0, 16, 10, 22]
+				var rot = rot_i[randi_range(0, 3)]
+				if is_flat_and_centered(Vector2(i,j), 1): set_tile(i,j,Z,"REDWOOD",rot)
+				#else: set_tile(i,j,Z,"TREE_"+str(randi_range(0,1)),rot)
 
 
+func is_flat_and_centered(coords: Vector2, range: int) -> bool:
+	var height = heightmap[coords.x][coords.y]
 
-func set_column(x, y, z, type): 
-	var i = 0
-	while i != z+1:
-		MAP_GRID.set_cell_item(Vector3(x, i, y), WORLD_TILE_LIST.TILE_NAMES[type], 0)
-		i += 1
-
-func set_path(x, y, type):
-	var i_min = 0 if x % (CHUNK_SIZE*CHUNK_COUNT) == 0 else 1-PATH_RADIUS
-	var j_min = 0 if y % (CHUNK_SIZE*CHUNK_COUNT) == 0 else 1-PATH_RADIUS
-	var i_max = 1 if (x+1) % (CHUNK_SIZE*CHUNK_COUNT) == 0 else PATH_RADIUS
-	var j_max = 1 if (y+1) % (CHUNK_SIZE*CHUNK_COUNT) == 0 else PATH_RADIUS
+	if coords.x == 0 or coords.x == CHUNK_COUNT*CHUNK_SIZE-1 \
+	or coords.y == 0 or coords.y == CHUNK_COUNT*CHUNK_SIZE-1:
+		return false
 	
-	# -1..1 unless on the edge of a chunk.
-	for i in range(i_min, i_max):
-		for j in range(j_min, j_max):
-			set_top_tile(x+i, y+j, type)
+	for i in range(coords.x - range, coords.x + range + 1):
+		for j in range(coords.y - range, coords.y + range + 1):
+			if heightmap[i][j] != height: return false
+	
+	return true
 
 
 # this section of code is adapted from the work of Alois Zingl

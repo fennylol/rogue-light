@@ -1,0 +1,9 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://bc2xqemq4m4xw"]
+
+[ext_resource type="Shader" path="res://world/map/trees/tree_fade.gdshader" id="1_iiu4w"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_iiu4w")
+shader_parameter/player_position = null
+shader_parameter/camera_position = null
