@@ -72,12 +72,24 @@ func set_path(x, y, type):
 	var j_min = 0 if y % (CHUNK_SIZE*CHUNK_COUNT) == 0 else 1-PATH_RADIUS
 	var i_max = 1 if (x+1) % (CHUNK_SIZE*CHUNK_COUNT) == 0 else PATH_RADIUS
 	var j_max = 1 if (y+1) % (CHUNK_SIZE*CHUNK_COUNT) == 0 else PATH_RADIUS
+	var height = 0.0
 	
-	# -1..1 unless on the edge of a chunk.
 	for i in range(i_min, i_max):
 		for j in range(j_min, j_max):
-			set_top_tile(x+i, y+j, type)
-			set_tile(x+i, y+j, heightmap[x+i][y+j]+1,"AIR")
+			height += heightmap[x+i][y+j]
+	
+	height = floor((height/(abs(i_max-i_min)*abs(j_max-j_min)))+0.5)
+	
+	# -1..1 unless on the edge of a chunk. (assuming r=2)
+	for i in range(i_min, i_max):
+		for j in range(j_min, j_max):
+			if MAX_HEIGHT <= 20:
+				set_tile(x+i, y+j, height-1, type)
+				set_tile(x+i, y+j, height, type)
+				set_tile(x+i, y+j, height+1,"AIR")
+			else:
+				set_tile(x+i, y+j, heightmap[x+i][y+j], type)
+				set_tile(x+i, y+j, heightmap[x+i][y+j]+1,"AIR")
 
 # function created with the help of claude AI, availible at claude.ai 
 func generate_noise_heightmap(width: int, height: int, max_height: int, noise_seed: int = randi(), frequency: float = 0.005, lacunarity: float = 2.0, gain: float = 0.5) -> Array:
@@ -219,7 +231,6 @@ func extend_path(chunk_coords, block_coords, dir):
 		if abs(block_coords.x-x2) + abs(block_coords.y-y2) > CHUNK_SIZE or true:
 			success = plotQuadBezierSeg(block_coords.x, block_coords.y, x1, y1, x2, y2, PATH_TILE)
 	return Vector2(x2, y2) + dir
-
 
 
 

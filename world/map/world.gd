@@ -12,8 +12,8 @@ const WorldBuilder = preload("res://world/map/world_builder.gd")
 @onready var GUI = $Gui as Control
 @onready var WORLD = $world_parts as Node3D
 @onready var MAP_GRID = $world_parts/GridMap as GridMap
-@onready var LIGHTS = $world_parts/lights as Node3D
-
+@onready var HEAVENLY_BODIES = $world_parts/lights/heavenly_bodies as Node3D
+@onready var STATIC_LIGHTS = $world_parts/lights/static_lights as Node3D
 
 @onready var test_tree = $Redwood
 @onready var test_tree2 = $Redwood2
@@ -31,8 +31,8 @@ const WorldBuilder = preload("res://world/map/world_builder.gd")
 #       |       |       #
 #       |       |       #
 # # # # # # # # # # # # #
-const CHUNK_SIZE = 8
-const CHUNK_COUNT = 8
+const CHUNK_SIZE = 16
+const CHUNK_COUNT = 16
 const MAX_HEIGHT = 10
 const PATH_RADIUS = 2
 const PATH_TILE = "PATH"
@@ -82,10 +82,10 @@ func _process(delta):
 		material.set_shader_parameter("player_position", PLAYER.global_transform.origin)
 		material.set_shader_parameter("camera_position", CAMERA.get_child(0).global_transform.origin)
 	
-	material = test_tree2.get_surface_override_material(0)
-	if material:
-		material.set_shader_parameter("player_position", PLAYER.global_transform.origin)
-		material.set_shader_parameter("camera_position", CAMERA.get_child(0).global_transform.origin)
+	#material = test_tree2.get_surface_override_material(0)
+	#if material:
+		#material.set_shader_parameter("player_position", PLAYER.global_transform.origin)
+		#material.set_shader_parameter("camera_position", CAMERA.get_child(0).global_transform.origin)
 
 
 func _on_map_generation_finished():
@@ -101,20 +101,17 @@ func process_world_tick():
 	if not (TIME[HOUR] or TIME[MINUTE]): TIME[PERIOD] = (TIME[PERIOD] + 1) % 2
 	GUI.update_display(TIME)
 	
-	LIGHTS.rotate_z((2*PI)/1440)
+	HEAVENLY_BODIES.rotate_z(-(2*PI)/1440)
 	
-	if TIME[HOUR] == 6: 
-		var sun = LIGHTS.get_child(0) as DirectionalLight3D
-		var moon = LIGHTS.get_child(1) as DirectionalLight3D
-		#sun.visible = not TIME[PERIOD]
-		#moon.visible = not not TIME[PERIOD]
-	
+	var fade_light = STATIC_LIGHTS.get_child(TIME[PERIOD]) as DirectionalLight3D
 	if TIME[HOUR] == 5:
-		var rising_light = LIGHTS.get_child(TIME[PERIOD]) as DirectionalLight3D
+		var rising_light = HEAVENLY_BODIES.get_child(TIME[PERIOD]) as DirectionalLight3D
 		rising_light.light_energy += 1/60.0
+		fade_light.light_energy += 3/60.0
 	elif TIME[HOUR] == 6:
-		var setting_light = LIGHTS.get_child(not TIME[PERIOD]) as DirectionalLight3D
+		var setting_light = HEAVENLY_BODIES.get_child(not TIME[PERIOD]) as DirectionalLight3D
 		setting_light.light_energy -= 1/60.0
+		fade_light.light_energy -= 3/60.0
 
 
 
@@ -124,7 +121,7 @@ func center_player():
 	while MAP_GRID.get_cell_item(Vector3i(midpoint,i,midpoint)) == -1: i+=1
 	PLAYER.position = Vector3(midpoint, i+1, midpoint)
 	reset_camera_position()
-	reset_camera_rotation()
+	#reset_camera_rotation()
 
 
 func move_camera(delta):

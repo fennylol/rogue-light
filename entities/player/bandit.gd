@@ -24,7 +24,7 @@ func _physics_process(delta):
 	var look_direction = (Vector3(look_input_dir.x, 0, look_input_dir.y)).normalized()
 	
 	var col_data = move_and_collide(velocity*delta, true)
-	if col_data != null && col_data.get_normal().y == 0 : velocity.y = JUMP_VELOCITY
+	if col_data != null && col_data.get_normal().y < 0.001 : velocity.y = JUMP_VELOCITY
 	if not is_on_floor(): velocity.y -= 5 * gravity * delta
 	
 	if look_direction:
