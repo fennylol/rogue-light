@@ -11,6 +11,8 @@ const ROTATION_SPEED = 7
 const SMOOTH_SPEED = 2.0
 
 var last_direction = Vector3(0, 0, -1)
+var last_jump_coords = Vector3.ZERO
+var is_banned_from_jumping = false
 @onready var MESH = $bandit
 @onready var SMOKE_TRAIL = $bandit/GPUParticles3D
 
@@ -24,7 +26,18 @@ func _physics_process(delta):
 	var look_direction = (Vector3(look_input_dir.x, 0, look_input_dir.y)).normalized()
 	
 	var col_data = move_and_collide(velocity*delta, true)
-	if col_data != null && col_data.get_normal().y < 0.001 : velocity.y = JUMP_VELOCITY
+	if col_data != null and col_data.get_normal().y < 0.5: 
+		if abs((last_jump_coords-position).length()) > 0.001 and not is_banned_from_jumping: 
+			velocity.y = JUMP_VELOCITY
+			last_jump_coords = position
+		else: 
+			print("stuck ", (last_jump_coords-position).length())
+			if is_banned_from_jumping: 
+				position += col_data.get_normal() * .5
+				print("blast off")
+			else: is_banned_from_jumping = true
+	elif col_data != null and col_data.get_normal().y > 0.5: is_banned_from_jumping = false
+	
 	if not is_on_floor(): velocity.y -= 5 * gravity * delta
 	
 	if look_direction:

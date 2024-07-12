@@ -43,7 +43,8 @@ func generate_map():
 	MAP_GRID.clear()
 	generate_chunks()
 	generate_forest()
-	generate_directed_path()
+	#generate_directed_curve("WATER")
+	generate_directed_curve(PATH_TILE)
 	finished.emit()
 
 
@@ -134,7 +135,7 @@ func generate_chunks(height_map: Array = [], show_chunks: bool = false):
 
 
 
-func generate_directed_path():
+func generate_directed_curve(tile):
 	# determine block, edge and chunk indices for start/end points
 	var org_block = CHUNK_SIZE/2 #randi_range(0, CHUNK_SIZE - 1)# the block index of where the path begins/ends
 	var org_edge = randi_range(0, 3) # which edge (^,>,v,<) the path begins/ends
@@ -189,7 +190,7 @@ func generate_directed_path():
 		dir = Vector2(dist.x/abs(dist.x) * move_x, dist.y/abs(dist.y) * (1-move_x))
 		if is_nan(dir.x): dir.x = 0
 		if is_nan(dir.y): dir.y = 0  
-		next_starting_point = extend_path(org_chunk_coords, next_starting_point, dir)
+		next_starting_point = extend_curve(org_chunk_coords, next_starting_point, dir, tile)
 		org_chunk_coords += dir
 	
 	while org_chunk_coords != term_chunk_coords:
@@ -200,21 +201,21 @@ func generate_directed_path():
 		dir = Vector2(dist.x/abs(dist.x) * move_x, dist.y/abs(dist.y) * (1-move_x))
 		if is_nan(dir.x): dir.x = 0
 		if is_nan(dir.y): dir.y = 0  
-		next_starting_point = extend_path(org_chunk_coords, next_starting_point, dir)
+		next_starting_point = extend_curve(org_chunk_coords, next_starting_point, dir, tile)
 		org_chunk_coords += dir
 
 	if term_edge == 0: dir = Vector2(0, -1)
 	elif term_edge == 1: dir = Vector2(1, 0)
 	elif term_edge == 2: dir = Vector2(0, 1)
 	else: dir = Vector2(-1, 0)
-	extend_path(org_chunk_coords, next_starting_point, dir)
+	extend_curve(org_chunk_coords, next_starting_point, dir, tile)
 
 
 
 
 
 ### PLOT CURVE AGAINST TILE GRID ###
-func extend_path(chunk_coords, block_coords, dir):
+func extend_curve(chunk_coords, block_coords, dir, path):
 	var offset = chunk_coords * CHUNK_SIZE
 	var rand = randi_range(0, CHUNK_SIZE - 1)
 	var success = false
@@ -229,20 +230,21 @@ func extend_path(chunk_coords, block_coords, dir):
 		x2 = ((abs(dir.x)*((1+dir.x)/2)*(CHUNK_SIZE-1)))+((1-abs(dir.x))*rand) + offset.x
 		y2 = ((abs(dir.y)*((1+dir.y)/2)*(CHUNK_SIZE-1)))+((1-abs(dir.y))*rand) + offset.y
 		if abs(block_coords.x-x2) + abs(block_coords.y-y2) > CHUNK_SIZE or true:
-			success = plotQuadBezierSeg(block_coords.x, block_coords.y, x1, y1, x2, y2, PATH_TILE)
+			success = plotQuadBezierSeg(block_coords.x, block_coords.y, x1, y1, x2, y2, path)
 	return Vector2(x2, y2) + dir
 
 
 
 
 func generate_forest(): 
+	#load("res://RAW_RESOURCES/helpers.gd").add_mesh_to_library_shaded("res://world/map/1m_tiles.tres", "res://world/map/trees/tall_pine.obj", "tall_pine")
 	for i in heightmap.size():
 		for j in heightmap[i].size():
 			var Z = heightmap[i][j]+1
-			if not randi_range(0,100):
+			if not randi_range(0,50):
 				var rot_i = [0, 16, 10, 22]
 				var rot = rot_i[randi_range(0, 3)]
-				if is_flat_and_centered(Vector2(i,j), 1): set_tile(i,j,Z,"REDWOOD",rot)
+				if is_flat_and_centered(Vector2(i,j), 1): set_tile(i,j,Z,"TALL_PINE",rot)
 				#else: set_tile(i,j,Z,"TREE_"+str(randi_range(0,1)),rot)
 
 
