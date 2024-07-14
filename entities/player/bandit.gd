@@ -4,7 +4,7 @@ extends CharacterBody3D
 # inventory
 
 
-
+var PAUSED = false
 const SPEED = 7.50
 const JUMP_VELOCITY = 9.8
 const ROTATION_SPEED = 7
@@ -15,7 +15,7 @@ var last_jump_coords = Vector3.ZERO
 var is_banned_from_jumping = false
 @onready var MESH = $bandit
 @onready var SMOKE_TRAIL = $bandit/GPUParticles3D
-
+var BOSS = Theboss
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 
@@ -24,6 +24,13 @@ func _physics_process(delta):
 	var look_input_dir = Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
 	var look_direction = (Vector3(look_input_dir.x, 0, look_input_dir.y)).normalized()
+	
+	if look_direction:
+		rotation.y += look_direction.x * delta
+		MESH.rotation.y -= look_direction.x * delta
+	if BOSS.PAUSED: return
+	
+	
 	
 	var col_data = move_and_collide(velocity*delta, true)
 	if col_data != null and col_data.get_normal().y < 0.5: 
@@ -40,9 +47,7 @@ func _physics_process(delta):
 	
 	if not is_on_floor(): velocity.y -= 5 * gravity * delta
 	
-	if look_direction:
-		rotation.y += look_direction.x * delta
-		MESH.rotation.y -= look_direction.x * delta
+
 	
 	if direction:
 		velocity.x = direction.x * SPEED
@@ -67,3 +72,4 @@ func _physics_process(delta):
 func reset_rotation():
 	rotation.y = 0
 	MESH.rotation.y = PI/2
+

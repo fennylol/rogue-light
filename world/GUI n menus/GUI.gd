@@ -3,23 +3,37 @@ extends Control
 # [x] compasss
 # [ ] cuter clock
 
+enum {AM, PM}
+enum {HOUR, MINUTE, PERIOD, DAY}
+
+@onready var text_display = $time_zone/time_display as Label
+@onready var clock_display = $time_zone/clock/clock_progress as TextureRect
+@onready var input = $command_zone/input_zone as TextEdit
+@onready var command_zone = $command_zone as VBoxContainer
+var BOSS = Theboss
+
+func _ready(): BOSS.tick.connect(update_display) 
+func _process(_delta):
+	if not command_zone.visible:
+		if Input.is_action_just_pressed("DEV_command"):
+			command_zone.visible = true
+			input.text = ""
+			input.grab_focus()
+			BOSS.pause_game()
+	else:
+		if Input.is_action_just_pressed("DEV_command") or Input.is_action_just_pressed("submit"):
+			command_zone.visible = false
+			var command = input.text.strip_edges()
+			Theboss.execute_command(command)
+			BOSS.pause_game(false)
 
 
-@onready var text_display = $HBoxContainer/time_display as Label
-@onready var clock_display = $HBoxContainer/clock/clock_progress as TextureRect
-
-
-func _ready(): pass 
-func _process(_delta): pass
-
-
-
-func update_display(TIME):
-	var hour = str(TIME[0] if TIME[0] else 12)  
-	var minute = str(TIME[1]).pad_zeros(2)
-	var period = "PM" if TIME[2] else "AM" 
+func update_display(TIME: Vector4i):
+	var hour = str(TIME[HOUR] if TIME[HOUR] else 12)  
+	var minute = str(TIME[MINUTE]).pad_zeros(2)
+	var period = "PM" if TIME[PERIOD] else "AM" 
 	text_display.text = hour + ":" + minute + " " + period
 	
-	hour = 12 - TIME[0] + TIME[2]*12 
-	minute = TIME[1]
+	hour = 12 - TIME[HOUR] + TIME[PERIOD]*12 
+	minute = TIME[MINUTE]
 	clock_display.rotation_degrees = hour*(360/24) - minute*(15.0/60.0)

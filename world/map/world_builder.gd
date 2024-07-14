@@ -7,12 +7,14 @@ extends Thread
 # - using hightmap, go through and paint biomes
 # fix vertical gaps
 
-const TILES = preload("res://world/map/world_tile_list.gd").TILE_NAMES
+const TILES = preload("res://world/executives/thelibrarian.gd").TILE_NAMES
 var CHUNK_SIZE
 var CHUNK_COUNT
 var MAX_HEIGHT
 var PATH_RADIUS
 var PATH_TILE
+const TREE_ODDS = 10
+const MIN_TREE_SPACING = 5
 
 signal finished
 var heightmap = []
@@ -241,10 +243,11 @@ func generate_forest():
 	for i in heightmap.size():
 		for j in heightmap[i].size():
 			var Z = heightmap[i][j]+1
-			if not randi_range(0,50):
+			if not randi_range(0,TREE_ODDS):
 				var rot_i = [0, 16, 10, 22]
 				var rot = rot_i[randi_range(0, 3)]
-				if is_flat_and_centered(Vector2(i,j), 1): set_tile(i,j,Z,"TALL_PINE",rot)
+				if is_flat_and_centered(Vector2(i,j), 1) and \
+				is_no_trees_nearby(Vector2(i,j), MIN_TREE_SPACING): set_tile(i,j,Z,"TALL_PINE",rot)
 				#else: set_tile(i,j,Z,"TREE_"+str(randi_range(0,1)),rot)
 
 
@@ -261,6 +264,18 @@ func is_flat_and_centered(coords: Vector2, range: int) -> bool:
 	
 	return true
 
+func is_no_trees_nearby(coords: Vector2, range: int):
+	if coords.x == 0 or coords.x == CHUNK_COUNT*CHUNK_SIZE-1 \
+	or coords.y == 0 or coords.y == CHUNK_COUNT*CHUNK_SIZE-1:
+		return false
+	
+	var height = heightmap[coords.x][coords.y]
+	for i in range(coords.x - range, coords.x + range + 1):
+		for j in range(coords.y - range, coords.y + range + 1):
+			for k in range(height - range, height + range + 1):
+				if MAP_GRID.get_cell_item(Vector3(i,k,j)) == TILES["TALL_PINE"]: return false
+	
+	return true
 
 # this section of code is adapted from the work of Alois Zingl
 # plotLine, plotQuadBezier and plotQuadBezierSeg are not my own

@@ -25,4 +25,6 @@ static func add_mesh_to_library_shaded(path_to_library: String, path_to_mesh: St
 	LIB.set_item_name(index, mesh_name)
 	LIB.set_item_mesh(index,mesh)
 	LIB.set_item_shapes(index, [load(path_to_mesh).create_trimesh_shape(), Transform3D.IDENTITY])
+	ResourceSaver.save(mesh, path_to_mesh)
 	ResourceSaver.save(LIB, path_to_library)
+	

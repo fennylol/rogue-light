@@ -4,8 +4,8 @@ extends Node3D
 # [ ] collect resources
 # [x] camera improvements
 
-
-const TILES = preload("res://world/map/world_tile_list.gd").TILE_NAMES
+var BOSS = Theboss
+const TILES = preload("res://world/executives/thelibrarian.gd").TILE_NAMES
 const WorldBuilder = preload("res://world/map/world_builder.gd")
 @onready var PLAYER = $Bandit as CharacterBody3D
 @onready var CAMERA = $camera_man as Node3D
@@ -15,8 +15,6 @@ const WorldBuilder = preload("res://world/map/world_builder.gd")
 @onready var HEAVENLY_BODIES = $world_parts/lights/heavenly_bodies as Node3D
 @onready var STATIC_LIGHTS = $world_parts/lights/static_lights as Node3D
 
-@onready var test_tree = $Redwood
-@onready var test_tree2 = $TallPine
 ### WORLD GEN PARAMETERS ###
 # # # # # # # # # # # # #
 # + > X |       |       #
@@ -33,7 +31,7 @@ const WorldBuilder = preload("res://world/map/world_builder.gd")
 # # # # # # # # # # # # #
 const CHUNK_SIZE = 16
 const CHUNK_COUNT = 16
-const MAX_HEIGHT = 10
+const MAX_HEIGHT = 20
 const PATH_RADIUS = 2
 const PATH_TILE = "PATH"
 var WORLD_BUILDER = WorldBuilder.new(CHUNK_COUNT, CHUNK_SIZE, MAX_HEIGHT, PATH_RADIUS, PATH_TILE)
@@ -49,57 +47,33 @@ var tracking = false
 
 ### TIME ###
 enum {AM, PM}
-enum {HOUR, MINUTE, PERIOD}
-var TIME = [0, 0, PM]
-var time_since_tick = 0
-var IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS = 1
-var TICK_SPEEDS = {"DEFAULT" = 1, "WARP" = 1.0/500, "FROZEN" = 4092024}
+enum {HOUR, MINUTE, PERIOD, DAY}
 
 
-##TODO: REMOVE THIS AND MAKE A REAL CONTROLL PANEL AT SOME POINT
-func process_dev_commands(_delta):
-	if Input.is_action_just_pressed("DEV_refresh"): generate_map()
-	if Input.is_action_just_pressed("DEV_time_warp"): change_world_tick_speed(TICK_SPEEDS["WARP"] if IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS != TICK_SPEEDS["WARP"] else TICK_SPEEDS["DEFAULT"] )
-	if Input.is_action_just_pressed("DEV_time_freeze"): change_world_tick_speed(TICK_SPEEDS["FROZEN"] if IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS != TICK_SPEEDS["FROZEN"] else TICK_SPEEDS["DEFAULT"] )
-
-func change_world_tick_speed(tick_length): IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS = tick_length
-
-
-func _ready(): generate_map()
+func _ready(): 
+	generate_map()
+	BOSS.tick.connect(process_world_tick)
+	BOSS.command_dispatch.connect(recieve_orders)
 
 
 func _process(delta):
 	move_camera(delta)
-	
-	time_since_tick += delta
-	if time_since_tick > IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS: 
-		time_since_tick -= IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS
-		process_world_tick()
-	
-	process_dev_commands(delta)
-	
-	var fade_shader: ShaderMaterial = MAP_GRID.mesh_library.get_item_mesh(TILES["TALL_PINE"]).surface_get_material(0)
-	if fade_shader:
-		fade_shader.set_shader_parameter("player_position", PLAYER.global_transform.origin)
-		fade_shader.set_shader_parameter("camera_position", CAMERA.get_child(0).global_transform.origin)
-		fade_shader.set_shader_parameter("fade_settings", FADE_SETTINGS)
+	var fade_material: Material = MAP_GRID.mesh_library.get_item_mesh(TILES["TALL_PINE"]).surface_get_material(0)
+	if fade_material is ShaderMaterial:
+		fade_material.set_shader_parameter("player_position", PLAYER.global_transform.origin)
+		fade_material.set_shader_parameter("camera_position", CAMERA.get_child(0).global_transform.origin)
+		fade_material.set_shader_parameter("fade_settings", FADE_SETTINGS)
+	else:
+		var shader_material = ShaderMaterial.new() as ShaderMaterial
+		shader_material.shader = preload("res://world/map/trees/tree_fade.gdshader")
+		var texture = preload("res://world/map/trees/tall_pine.png")
+		shader_material.set_shader_parameter("albedo_texture", texture)
+		MAP_GRID.mesh_library.get_item_mesh(TILES["TALL_PINE"]).surface_set_material(0, shader_material)
 
 
-
-func _on_map_generation_finished():
-	MAP_GRID.queue_free()
-	MAP_GRID = WORLD_BUILDER.get_map_grid()
-	WORLD.add_child(MAP_GRID)
-	center_player()
-
-
-func process_world_tick():
-	TIME[MINUTE] = (TIME[MINUTE] + 1) % 60
-	if not TIME[MINUTE]: TIME[HOUR] = ((TIME[HOUR] + 1) % 12)
-	if not (TIME[HOUR] or TIME[MINUTE]): TIME[PERIOD] = (TIME[PERIOD] + 1) % 2
-	GUI.update_display(TIME)
-	
-	HEAVENLY_BODIES.rotate_z(-(2*PI)/1440.0)
+func process_world_tick(TIME: Vector4i):
+	#HEAVENLY_BODIES.rotate_z(-(2*PI)/1440.0)
+	HEAVENLY_BODIES.rotation_degrees.z = TIME[HOUR]*(360/24) - TIME[MINUTE]*(15.0/60.0)
 	
 	var fade_light = STATIC_LIGHTS.get_child(TIME[PERIOD]) as DirectionalLight3D
 	if TIME[HOUR] == 5:
@@ -112,20 +86,30 @@ func process_world_tick():
 		fade_light.light_energy -= 2/60.0
 
 
+func generate_map():
+	WORLD_BUILDER = WorldBuilder.new(CHUNK_COUNT, CHUNK_SIZE, MAX_HEIGHT, PATH_RADIUS, PATH_TILE)
+	WORLD_BUILDER.connect("finished", on_map_generation_finished)
+	WORLD_BUILDER.generate_map()
+
+
+func on_map_generation_finished():
+	MAP_GRID.queue_free()
+	MAP_GRID = WORLD_BUILDER.get_map_grid()
+	WORLD.add_child(MAP_GRID)
+	center_player()
+
 
 func center_player():
 	var midpoint = CHUNK_COUNT/2.0 * CHUNK_SIZE as int
 	var i = -1
 	while MAP_GRID.get_cell_item(Vector3i(midpoint,i,midpoint)) == -1: i+=1
 	PLAYER.position = Vector3(midpoint, i+1, midpoint)
-	reset_camera_position()
-	#reset_camera_rotation()
+	reset_camera()
 
 
 func move_camera(delta):
 	var diff_x = abs(CAMERA.position.x - PLAYER.position.x)
 	var lerp_speed_x = ((diff_x/(CAMERA.get_child(0).size/4))**2.0)*delta
-	#var lerp_speed_x = ((diff_x/CAM_MAX_RANGE)**2.0)*delta
 	CAMERA.position.x = lerpf(CAMERA.position.x, PLAYER.position.x, lerp_speed_x)  
 	
 	var diff_y = abs(CAMERA.position.y - PLAYER.position.y)
@@ -142,20 +126,18 @@ func move_camera(delta):
 		CAMERA.rotation.y += look_direction.x * delta
 		if CAMERA.get_child(0).size > 5 or look_direction.z > 0: CAMERA.get_child(0).size += look_direction.z 
 	
-	if Input.is_action_pressed("look_up") and Input.is_action_pressed("look_down"): reset_camera_position()
-	if Input.is_action_pressed("look_left") and Input.is_action_pressed("look_right"): reset_camera_rotation()
-
-func reset_camera_position():
-		CAMERA.get_child(0).size = CAM_SIZE
-		CAMERA.position = PLAYER.position
-
-func reset_camera_rotation():
-		CAMERA.rotation = Vector3.ZERO
-		PLAYER.reset_rotation()
+	if Input.is_action_pressed("DEV"):
+		if Input.is_action_pressed("look_up") and Input.is_action_pressed("look_down"): reset_camera(false, false, true)
+		if Input.is_action_pressed("look_left") and Input.is_action_pressed("look_right"): reset_camera(false, true, false)
+		if Input.is_action_pressed("look_up") and Input.is_action_pressed("look_left"): reset_camera()
 
 
-func generate_map():
-	WORLD_BUILDER = WorldBuilder.new(CHUNK_COUNT, CHUNK_SIZE, MAX_HEIGHT, PATH_RADIUS, PATH_TILE)
-	WORLD_BUILDER.connect("finished", _on_map_generation_finished)
-	WORLD_BUILDER.generate_map()
+func reset_camera(p: bool = true, r: bool = true, s: bool = true):
+	if p: CAMERA.position = PLAYER.position
+	if r: CAMERA.rotation = Vector3.ZERO; PLAYER.reset_rotation()
+	if s: CAMERA.get_child(0).size = CAM_SIZE
 
+
+func recieve_orders(orders: Dictionary):
+	if orders.command_name == "resetworld": generate_map()
+	elif orders.command_name == "run": pass

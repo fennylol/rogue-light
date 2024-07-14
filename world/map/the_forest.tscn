@@ -1,26 +1,14 @@
-[gd_scene load_steps=13 format=3 uid="uid://cpxaw5tb41bbg"]
+[gd_scene load_steps=6 format=3 uid="uid://cpxaw5tb41bbg"]
 
 [ext_resource type="Script" path="res://world/map/world.gd" id="1_ojsoe"]
 [ext_resource type="PackedScene" uid="uid://colwxwbes7ubn" path="res://entities/player/bandit.tscn" id="2_qb25q"]
 [ext_resource type="MeshLibrary" uid="uid://dxw4swdbv05fa" path="res://world/map/1m_tiles.tres" id="4_fhid5"]
-[ext_resource type="ArrayMesh" uid="uid://dh5h2qt46qjvp" path="res://world/map/trees/redwood.obj" id="5_6oycd"]
 [ext_resource type="PackedScene" uid="uid://83cqsdl8tpcn" path="res://world/GUI n menus/GUI.tscn" id="5_wo31t"]
-[ext_resource type="Texture2D" uid="uid://caja5ytc1f1a8" path="res://world/map/trees/redwood_redwood.png" id="6_g8q0d"]
-[ext_resource type="Script" path="res://world/map/Redwood.gd" id="6_ire2g"]
-[ext_resource type="PackedScene" uid="uid://3esu12xw7aw1" path="res://world/map/trees/tall_pine.glb" id="8_sojhk"]
-[ext_resource type="Script" path="res://world/map/trees/tall_pine.gd" id="9_0b4v5"]
-[ext_resource type="ArrayMesh" uid="uid://ymccg6yalfy7" path="res://world/map/trees/tall_pine.obj" id="9_8nwc5"]
 
 [sub_resource type="Environment" id="Environment_clwrb"]
 background_color = Color(0.384314, 0.737255, 0.835294, 1)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0ks5x"]
-albedo_texture = ExtResource("6_g8q0d")
-proximity_fade_enabled = true
-distance_fade_min_distance = 1213.82
-distance_fade_max_distance = 557.59
-
-[node name="Node3D" type="Node3D"]
+[node name="World" type="Node3D"]
 script = ExtResource("1_ojsoe")
 
 [node name="Bandit" parent="." instance=ExtResource("2_qb25q")]
@@ -84,24 +72,3 @@ light_energy = 0.05
 environment = SubResource("Environment_clwrb")
 
 [node name="Gui" parent="." instance=ExtResource("5_wo31t")]
-
-[node name="Redwood2" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.1093, 3.13293, 16.8278)
-mesh = ExtResource("5_6oycd")
-skeleton = NodePath("../Redwood")
-surface_material_override/0 = SubResource("StandardMaterial3D_0ks5x")
-script = ExtResource("6_ire2g")
-
-[node name="Redwood" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.418, 3.31425, 24.3965)
-mesh = ExtResource("5_6oycd")
-script = ExtResource("6_ire2g")
-
-[node name="tall_pine" parent="." instance=ExtResource("8_sojhk")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46.1751, 3.59245, 24.7562)
-
-[node name="TallPine" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.1317, -0.328281, 27.9596)
-cast_shadow = 2
-mesh = ExtResource("9_8nwc5")
-script = ExtResource("9_0b4v5")
