@@ -7,7 +7,7 @@ extends Thread
 # - using hightmap, go through and paint biomes
 # fix vertical gaps
 
-const TILES = preload("res://world/executives/thelibrarian.gd").TILE_NAMES
+const TILES = preload("res://world/noblemen/thearchivist.gd").TILE_NAMES
 var CHUNK_SIZE
 var CHUNK_COUNT
 var MAX_HEIGHT

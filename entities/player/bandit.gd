@@ -15,11 +15,12 @@ var last_jump_coords = Vector3.ZERO
 var is_banned_from_jumping = false
 @onready var MESH = $bandit
 @onready var SMOKE_TRAIL = $bandit/GPUParticles3D
-var BOSS = Theboss
+var DUKE = TheDuke
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 
 func _physics_process(delta):
+	if DUKE.PAUSED: return
 	var input_dir = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var look_input_dir = Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
@@ -28,8 +29,6 @@ func _physics_process(delta):
 	if look_direction:
 		rotation.y += look_direction.x * delta
 		MESH.rotation.y -= look_direction.x * delta
-	if BOSS.PAUSED: return
-	
 	
 	
 	var col_data = move_and_collide(velocity*delta, true)

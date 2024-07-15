@@ -36,6 +36,7 @@ metadata/_editor_floor_ = Vector3(0, 2, 0)
 transform = Transform3D(-1, 0, -1.50996e-07, 0, 1, 0, 1.50996e-07, 0, -1, 0, 0, 0)
 
 [node name="heavenly_bodies" type="Node3D" parent="world_parts/lights"]
+rotation_order = 5
 
 [node name="sun" type="DirectionalLight3D" parent="world_parts/lights/heavenly_bodies"]
 transform = Transform3D(-0.833163, -0.553011, 0.00421784, -0.236296, 0.362877, 0.901379, -0.500003, 0.749999, -0.43301, 0, 0, 0)

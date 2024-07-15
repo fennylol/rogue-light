@@ -4,8 +4,8 @@ extends Node3D
 # [ ] collect resources
 # [x] camera improvements
 
-var BOSS = Theboss
-const TILES = preload("res://world/executives/thelibrarian.gd").TILE_NAMES
+var DUKE = TheDuke
+const TILES = preload("res://world/noblemen/thearchivist.gd").TILE_NAMES
 const WorldBuilder = preload("res://world/map/world_builder.gd")
 @onready var PLAYER = $Bandit as CharacterBody3D
 @onready var CAMERA = $camera_man as Node3D
@@ -41,7 +41,7 @@ var TREES = []
 ### CAMERA PARAMETERS ###
 var CAM_MAX_RANGE = 10
 const CAM_SIZE = 20
-const FADE_SETTINGS = Vector3(5.0, 20.0, 0.25) # begin dist, end dist, and min alpha
+var FADE_SETTINGS = Vector3(5.0, 20.0, 0.25) # begin dist, end dist, and min alpha
 var tracking = false
 
 
@@ -52,11 +52,17 @@ enum {HOUR, MINUTE, PERIOD, DAY}
 
 func _ready(): 
 	generate_map()
-	BOSS.tick.connect(process_world_tick)
-	BOSS.command_dispatch.connect(recieve_orders)
+	DUKE.tick.connect(process_world_tick)
+	DUKE.command_dispatch.connect(recieve_orders)
+
+
+func recieve_orders(orders: Dictionary):
+	if orders.command_name == "resetworld": generate_map()
+	elif orders.command_name == "setfade": COMMAND_setfade(orders.options)
 
 
 func _process(delta):
+	if DUKE.PAUSED: return
 	move_camera(delta)
 	var fade_material: Material = MAP_GRID.mesh_library.get_item_mesh(TILES["TALL_PINE"]).surface_get_material(0)
 	if fade_material is ShaderMaterial:
@@ -73,7 +79,8 @@ func _process(delta):
 
 func process_world_tick(TIME: Vector4i):
 	#HEAVENLY_BODIES.rotate_z(-(2*PI)/1440.0)
-	HEAVENLY_BODIES.rotation_degrees.z = TIME[HOUR]*(360/24) - TIME[MINUTE]*(15.0/60.0)
+	var hour =  12 - TIME[HOUR] + TIME[PERIOD]*12 
+	HEAVENLY_BODIES.rotation_degrees.z = hour*(360/24) - TIME[MINUTE]*(15.0/60.0)
 	
 	var fade_light = STATIC_LIGHTS.get_child(TIME[PERIOD]) as DirectionalLight3D
 	if TIME[HOUR] == 5:
@@ -138,6 +145,11 @@ func reset_camera(p: bool = true, r: bool = true, s: bool = true):
 	if s: CAMERA.get_child(0).size = CAM_SIZE
 
 
-func recieve_orders(orders: Dictionary):
-	if orders.command_name == "resetworld": generate_map()
-	elif orders.command_name == "run": pass
+func COMMAND_setfade(options: Dictionary):
+	var begin: float = FADE_SETTINGS.x
+	var end: float = FADE_SETTINGS.y
+	var minalpha: float = FADE_SETTINGS.z
+	if options.has("begin"): begin = float(options.begin[0])
+	if options.has("end"): end = float(options.end[0])
+	if options.has("minalpha"): minalpha = float(options.minalpha[0])
+	FADE_SETTINGS = Vector3(begin, end, minalpha)

@@ -1,6 +1,6 @@
 extends Node
 
-const LIBRARIAN = preload("res://world/executives/thelibrarian.gd")
+const ARCHIVIST = preload("res://world/noblemen/thearchivist.gd")
 
 static func parse_command_string(input: String) -> Dictionary:
 	# validate input pattern matches "/command -option[arg1,arg2,arg3]"
@@ -9,7 +9,7 @@ static func parse_command_string(input: String) -> Dictionary:
 	regex.compile(pattern)
 	
 	var result = regex.search(input)
-	if not result: return {"error": "\""+input+"\" is not in the form of \"/command -option[arg1,arg2,arg3]\""}
+	if not result: return {"error": input+" is not in the form of /command -option[arg1,arg2,arg3]"}
 	
 	var command = result.get_string(1)
 	var options_string = result.get_string(2)
@@ -29,7 +29,7 @@ static func parse_command_string(input: String) -> Dictionary:
 	# parse complete 
 	
 	# validate input command and options exist and are valid
-	var command_dict: Dictionary = LIBRARIAN.COMMANDS
+	var command_dict: Dictionary = ARCHIVIST.COMMANDS
 	if command_dict.has(output_dict.command_name):
 		for option in output_dict.options:
 			if not command_dict[output_dict.command_name]["accepted_options"].has(option): 

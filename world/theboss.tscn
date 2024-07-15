@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://c1enh311jeua1"]
-
-[ext_resource type="Script" path="res://world/executives/theboss.gd" id="1_sq2qk"]
-
-[node name="Theboss" type="Node3D"]
-script = ExtResource("1_sq2qk")
