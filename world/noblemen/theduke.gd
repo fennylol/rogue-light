@@ -2,14 +2,13 @@
 extends Node
 
 ### OTHER EXECS ###
-const ARCHIVIST = preload("res://world/noblemen/thearchivist.gd")
 const COMMANDER = preload("res://world/noblemen/thecommander.gd")
 
 var PAUSED = false
 
 enum {AM, PM}
 enum {HOUR, MINUTE, PERIOD, DAY}
-var TIME = Vector4i(0, 0, PM, 0)
+var TIME = Vector4i(5, 59, AM, -1)
 var time_since_tick = 0
 var IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS = 1
 var TICK_SPEEDS = {"DEFAULT" = 1, "WARP" = 1.0/500, "FROZEN" = 4092024}
@@ -27,9 +26,13 @@ func process_dev_inputs(_delta):
 func change_world_tick_speed(tick_length): 
 	IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS = tick_length
 	time_since_tick = 0
+
 func pause_game(state: bool = true): PAUSED = state
 
-func _ready(): command_dispatch.connect(order_self)
+func _ready(): 
+	command_dispatch.connect(order_self)
+	time_since_tick = IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS
+
 func _process(delta):
 	process_dev_inputs(delta)
 	
@@ -38,6 +41,7 @@ func _process(delta):
 	if time_since_tick > IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS: 
 		time_since_tick -= IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS
 		send_world_tick()
+
 
 func send_world_tick():
 	TIME[MINUTE] = (TIME[MINUTE] + 1) % 60
@@ -56,9 +60,9 @@ func execute_command(input: String = "/help"):
 func order_self(orders: Dictionary):
 	print("BOSS dispatching: ", orders)
 	if orders.command_name == "settime": COMMAND_settime(orders.options)
+	if orders.command_name == "pause": pause_game(not PAUSED)
 
 func COMMAND_settime(options: Dictionary):
-	print("boss options: ", options)
 	if options.has("time"):
 		if options["time"].size()==4:
 			TIME = Vector4i(int(options["time"][0]),\
@@ -75,5 +79,6 @@ func COMMAND_settime(options: Dictionary):
 		if options.has("m"): TIME[MINUTE] = clamp(int(options["m"][0]), 0, 59)
 		if options.has("p"): TIME[PERIOD] = clamp(int(options["p"][0]), 0, 1)
 		if options.has("d"): TIME[DAY] = max(int(options["d"][0]), 0)
+
 
 

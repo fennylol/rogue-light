@@ -18,6 +18,8 @@ config/icon="res://icon.svg"
 [autoload]
 
 TheDuke="*res://world/noblemen/theduke.gd"
+TheArchivist="*res://world/noblemen/thearchivist.gd"
+TheFool="*res://world/noblemen/thefool.gd"
 
 [filesystem]
 

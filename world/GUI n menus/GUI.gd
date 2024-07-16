@@ -12,7 +12,7 @@ enum {HOUR, MINUTE, PERIOD, DAY}
 @onready var command_zone = $command_zone as VBoxContainer
 @onready var output = $command_zone/bottom_log/output_zone as RichTextLabel
 var DUKE = TheDuke
-var ARCHIVIST = preload("res://world/noblemen/thearchivist.gd")
+var ARCHIVIST = TheArchivist
 
 var COMMAND_HISTORY: Array[String] = []
 var CH_pointer = -1
@@ -38,10 +38,10 @@ func _process(_delta):
 			command_zone.visible = true
 			output.text = ""
 			input.grab_focus()
-			DUKE.pause_game()
+			#DUKE.pause_game()
 	else:
 		if Input.is_action_just_pressed("DEV_command") or Input.is_action_just_pressed("submit"):
-			if Input.is_action_just_pressed("DEV_command"): command_zone.visible = false; DUKE.pause_game(false)
+			if Input.is_action_just_pressed("DEV_command"): command_zone.visible = false; #DUKE.pause_game(false)
 			var command = input.text.strip_edges()
 			COMMAND_HISTORY.push_front(command)
 			DUKE.execute_command(command)

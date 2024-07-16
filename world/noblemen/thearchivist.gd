@@ -1,6 +1,18 @@
 extends Node
 
-enum TILE_NAMES {GRASS, STONE, WOOD, PATH, WATER, SNOW, TALL_PINE, AIR = -1}
+enum TILE_NAMES {GRASS, STONE, WOOD, PATH, WATER, SNOW, TALL_PINE, WHITE, BLACK, AIR = -1}
+
+enum period {AM, PM}
+enum time {HOUR, MINUTE, PERIOD, DAY}
+
+const sameple_command = {
+	"": {
+		"accepted_options":{
+			"": "",
+		},
+		"desc": ""
+	}
+}
 
 const COMMANDS = {
 	"run": {
@@ -13,7 +25,7 @@ const COMMANDS = {
 	},
 	"pause": {
 		"accepted_options": {},
-		"desc": "!!! NOT IMPLEMENTED !!! pause or unpause the game"
+		"desc": "pause or unpause the game"
 	},
 	"resetworld": {
 		"accepted_options": {
@@ -41,11 +53,19 @@ const COMMANDS = {
 		},
 		"desc": "adjust foreground object fade"
 	},
-		"help": {
+	"help": {
 		"accepted_options": {
 			"command": "an array of commands to have explained",
 			"verbose": "FLAG - list options along with commands"
 		},
 		"desc": "list availible commands or how to use specific ones"
+	},
+	"seed": {
+		"accepted_options":{
+			"set": "seed to use for the global RNG",
+			"get": "FLAG - get the current seed in use"
+		},
+		"desc": "feed the fool a seed."
 	}
 }
+

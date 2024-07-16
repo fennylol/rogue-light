@@ -5,7 +5,8 @@ extends Node3D
 # [x] camera improvements
 
 var DUKE = TheDuke
-const TILES = preload("res://world/noblemen/thearchivist.gd").TILE_NAMES
+var ARCHIVIST = TheArchivist
+var FOOL = TheFool
 const WorldBuilder = preload("res://world/map/world_builder.gd")
 @onready var PLAYER = $Bandit as CharacterBody3D
 @onready var CAMERA = $camera_man as Node3D
@@ -29,12 +30,13 @@ const WorldBuilder = preload("res://world/map/world_builder.gd")
 #       |       |       #
 #       |       |       #
 # # # # # # # # # # # # #
-const CHUNK_SIZE = 16
-const CHUNK_COUNT = 16
-const MAX_HEIGHT = 20
+const CHUNK_SIZE = 32
+const CHUNK_COUNT = 2
+const MAX_HEIGHT = 10
 const PATH_RADIUS = 2
 const PATH_TILE = "PATH"
-var WORLD_BUILDER = WorldBuilder.new(CHUNK_COUNT, CHUNK_SIZE, MAX_HEIGHT, PATH_RADIUS, PATH_TILE)
+const DEBUG_MODE = false
+var WORLD_BUILDER = WorldBuilder.new(CHUNK_SIZE, CHUNK_COUNT, MAX_HEIGHT, PATH_RADIUS, PATH_TILE, DEBUG_MODE)
 var TREES = []
 
 
@@ -45,9 +47,11 @@ var FADE_SETTINGS = Vector3(5.0, 20.0, 0.25) # begin dist, end dist, and min alp
 var tracking = false
 
 
-### TIME ###
+#### TIME ###
 enum {AM, PM}
 enum {HOUR, MINUTE, PERIOD, DAY}
+var SHIPPING_SCHEDULE: Vector4i = Vector4i(13,14,0,0)
+const SCHEDULE_LENGTH = 14
 
 
 func _ready(): 
@@ -64,7 +68,7 @@ func recieve_orders(orders: Dictionary):
 func _process(delta):
 	if DUKE.PAUSED: return
 	move_camera(delta)
-	var fade_material: Material = MAP_GRID.mesh_library.get_item_mesh(TILES["TALL_PINE"]).surface_get_material(0)
+	var fade_material: Material = MAP_GRID.mesh_library.get_item_mesh(ARCHIVIST.TILE_NAMES["TALL_PINE"]).surface_get_material(0)
 	if fade_material is ShaderMaterial:
 		fade_material.set_shader_parameter("player_position", PLAYER.global_transform.origin)
 		fade_material.set_shader_parameter("camera_position", CAMERA.get_child(0).global_transform.origin)
@@ -74,28 +78,59 @@ func _process(delta):
 		shader_material.shader = preload("res://world/map/trees/tree_fade.gdshader")
 		var texture = preload("res://world/map/trees/tall_pine.png")
 		shader_material.set_shader_parameter("albedo_texture", texture)
-		MAP_GRID.mesh_library.get_item_mesh(TILES["TALL_PINE"]).surface_set_material(0, shader_material)
+		MAP_GRID.mesh_library.get_item_mesh(ARCHIVIST.TILE_NAMES["TALL_PINE"]).surface_set_material(0, shader_material)
 
 
 func process_world_tick(TIME: Vector4i):
-	#HEAVENLY_BODIES.rotate_z(-(2*PI)/1440.0)
+	# adjust lighting
 	var hour =  12 - TIME[HOUR] + TIME[PERIOD]*12 
 	HEAVENLY_BODIES.rotation_degrees.z = hour*(360/24) - TIME[MINUTE]*(15.0/60.0)
 	
 	var fade_light = STATIC_LIGHTS.get_child(TIME[PERIOD]) as DirectionalLight3D
 	if TIME[HOUR] == 5:
 		var rising_light = HEAVENLY_BODIES.get_child(TIME[PERIOD]) as DirectionalLight3D
-		rising_light.light_energy += 1/60.0
-		fade_light.light_energy += 2/60.0
+		rising_light.light_energy = TIME[MINUTE]/60.0
+		fade_light.light_energy = TIME[MINUTE]*2/60.0
 	elif TIME[HOUR] == 6:
 		var setting_light = HEAVENLY_BODIES.get_child(not TIME[PERIOD]) as DirectionalLight3D
-		setting_light.light_energy -= 1/60.0
-		fade_light.light_energy -= 2/60.0
+		setting_light.light_energy = 1-TIME[MINUTE]/60.0
+		fade_light.light_energy = 2-TIME[MINUTE]*2/60.0
+	else: 
+		STATIC_LIGHTS.get_child(0).light_energy = 0
+		STATIC_LIGHTS.get_child(1).light_energy = 0
+	
+	# schedule caravan
+	var schedule_progress = TIME[DAY] % SCHEDULE_LENGTH
+	if not (schedule_progress or TIME[MINUTE] or TIME[PERIOD]) and TIME[HOUR] == 6:
+		
+		SHIPPING_SCHEDULE.x = FOOL.range_i(0,SCHEDULE_LENGTH)
+		SHIPPING_SCHEDULE.y = FOOL.range_i(0,SCHEDULE_LENGTH-1)
+		SHIPPING_SCHEDULE.z = FOOL.range_i(0, 1439)
+		SHIPPING_SCHEDULE.w = FOOL.range_i(0, 1439)
+		if SHIPPING_SCHEDULE.y >= SHIPPING_SCHEDULE.x: SHIPPING_SCHEDULE.y += 1
+	if  ((schedule_progress == SHIPPING_SCHEDULE.x) and \
+		(TIME[PERIOD]*720 + TIME[HOUR]*60 + TIME[MINUTE] == SHIPPING_SCHEDULE.z)) or \
+		((schedule_progress == SHIPPING_SCHEDULE.y) and \
+		(TIME[PERIOD]*720 + TIME[HOUR]*60 + TIME[MINUTE] == SHIPPING_SCHEDULE.w)):
+			send_shipment()
+
+
+func send_shipment():
+	print("A CARAVAN ENTERS THE FOREST")
+	var path = WORLD_BUILDER.get_road_path()
+	print(path)
+	for points in path:
+		var path3d = Path3D.new()
+		path3d.set_curve(Curve3D.new())
+		path3d.curve.add_point(points[0])
+		path3d.curve.add_point(points[1])
+		path3d.curve.add_point(points[2])
+		WORLD.add_child(path3d)
 
 
 func generate_map():
-	WORLD_BUILDER = WorldBuilder.new(CHUNK_COUNT, CHUNK_SIZE, MAX_HEIGHT, PATH_RADIUS, PATH_TILE)
-	WORLD_BUILDER.connect("finished", on_map_generation_finished)
+	WORLD_BUILDER = WorldBuilder.new(CHUNK_SIZE, CHUNK_COUNT, MAX_HEIGHT, PATH_RADIUS, PATH_TILE, DEBUG_MODE)
+	WORLD_BUILDER.finished.connect(on_map_generation_finished)
 	WORLD_BUILDER.generate_map()
 
 
@@ -103,14 +138,14 @@ func on_map_generation_finished():
 	MAP_GRID.queue_free()
 	MAP_GRID = WORLD_BUILDER.get_map_grid()
 	WORLD.add_child(MAP_GRID)
+	print(WORLD_BUILDER.get_road_path())
 	center_player()
 
 
 func center_player():
 	var midpoint = CHUNK_COUNT/2.0 * CHUNK_SIZE as int
-	var i = -1
-	while MAP_GRID.get_cell_item(Vector3i(midpoint,i,midpoint)) == -1: i+=1
-	PLAYER.position = Vector3(midpoint, i+1, midpoint)
+	
+	PLAYER.position = Vector3(midpoint, WORLD_BUILDER.get_heightmap()[midpoint][midpoint]+2, midpoint)
 	reset_camera()
 
 
