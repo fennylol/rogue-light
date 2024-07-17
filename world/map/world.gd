@@ -8,6 +8,7 @@ var DUKE = TheDuke
 var ARCHIVIST = TheArchivist
 var FOOL = TheFool
 const WorldBuilder = preload("res://world/map/world_builder.gd")
+var Caravan = preload("res://entities/caravan/caravan.gd")
 @onready var PLAYER = $Bandit as CharacterBody3D
 @onready var CAMERA = $camera_man as Node3D
 @onready var GUI = $Gui as Control
@@ -31,8 +32,8 @@ const WorldBuilder = preload("res://world/map/world_builder.gd")
 #       |       |       #
 # # # # # # # # # # # # #
 const CHUNK_SIZE = 32
-const CHUNK_COUNT = 2
-const MAX_HEIGHT = 10
+const CHUNK_COUNT = 8
+const MAX_HEIGHT = 40
 const PATH_RADIUS = 2
 const PATH_TILE = "PATH"
 const DEBUG_MODE = false
@@ -51,7 +52,8 @@ var tracking = false
 enum {AM, PM}
 enum {HOUR, MINUTE, PERIOD, DAY}
 var SHIPPING_SCHEDULE: Vector4i = Vector4i(13,14,0,0)
-const SCHEDULE_LENGTH = 14
+const SCHEDULE_LENGTH = 2
+const CARAVAN_TIME_TO_COMPLETE = 10.0
 
 
 func _ready(): 
@@ -102,7 +104,6 @@ func process_world_tick(TIME: Vector4i):
 	# schedule caravan
 	var schedule_progress = TIME[DAY] % SCHEDULE_LENGTH
 	if not (schedule_progress or TIME[MINUTE] or TIME[PERIOD]) and TIME[HOUR] == 6:
-		
 		SHIPPING_SCHEDULE.x = FOOL.range_i(0,SCHEDULE_LENGTH)
 		SHIPPING_SCHEDULE.y = FOOL.range_i(0,SCHEDULE_LENGTH-1)
 		SHIPPING_SCHEDULE.z = FOOL.range_i(0, 1439)
@@ -118,15 +119,18 @@ func process_world_tick(TIME: Vector4i):
 func send_shipment():
 	print("A CARAVAN ENTERS THE FOREST")
 	var path = WORLD_BUILDER.get_road_path()
-	print(path)
+	var path3d = Path3D.new()
+	path3d.set_curve(Curve3D.new())
+	
 	for points in path:
-		var path3d = Path3D.new()
-		path3d.set_curve(Curve3D.new())
-		path3d.curve.add_point(points[0])
-		path3d.curve.add_point(points[1])
-		path3d.curve.add_point(points[2])
-		WORLD.add_child(path3d)
-
+		path3d.curve.add_point(points[0], Vector3.ZERO, points[1]-points[0])
+		path3d.curve.add_point(points[2], points[1]-points[2])
+	
+	
+	#path3d.position.y += 2.5
+	var caravan = Caravan.init(CARAVAN_TIME_TO_COMPLETE)
+	path3d.add_child(caravan)
+	WORLD.add_child(path3d)
 
 func generate_map():
 	WORLD_BUILDER = WorldBuilder.new(CHUNK_SIZE, CHUNK_COUNT, MAX_HEIGHT, PATH_RADIUS, PATH_TILE, DEBUG_MODE)
@@ -138,12 +142,11 @@ func on_map_generation_finished():
 	MAP_GRID.queue_free()
 	MAP_GRID = WORLD_BUILDER.get_map_grid()
 	WORLD.add_child(MAP_GRID)
-	print(WORLD_BUILDER.get_road_path())
 	center_player()
 
 
 func center_player():
-	var midpoint = CHUNK_COUNT/2.0 * CHUNK_SIZE as int
+	var midpoint = CHUNK_COUNT/4.0 * CHUNK_SIZE as int
 	
 	PLAYER.position = Vector3(midpoint, WORLD_BUILDER.get_heightmap()[midpoint][midpoint]+2, midpoint)
 	reset_camera()

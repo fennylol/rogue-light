@@ -6,7 +6,7 @@ extends CharacterBody3D
 
 var PAUSED = false
 const SPEED = 7.50
-const JUMP_VELOCITY = 9.8
+const JUMP_VELOCITY = 9.8/2
 const ROTATION_SPEED = 7
 const SMOOTH_SPEED = 2.0
 

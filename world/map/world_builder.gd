@@ -16,6 +16,7 @@ var PATH_RADIUS
 var PATH_TILE
 const TREE_ODDS = 10
 const MIN_TREE_SPACING = 5
+const WORLD_SCALE = Vector3(.5,.25,.5)
 
 signal finished
 var heightmap = []
@@ -34,8 +35,8 @@ func _init(cs: int = 16, cc: int = 16, mh: int = 10, pr: int = 2, pt: String = "
 	MAX_HEIGHT = mh * int(not dm)
 	PATH_RADIUS = pr
 	PATH_TILE = pt
-	MAP_GRID.mesh_library = load("res://world/map/1m_tiles.tres")
-	MAP_GRID.set_cell_size(Vector3(1,1,1))
+	MAP_GRID.mesh_library = load("res://world/map/halfm_tiles.tres")
+	MAP_GRID.set_cell_size(WORLD_SCALE)
 	MAP_GRID.position = Vector3(-0.5,0,-0.5)
 	SHOW_CHUNKS = dm
 	SHOW_CURVE_HANDLES = dm
@@ -133,7 +134,7 @@ func generate_chunks(height_map: Array = [], show_chunks: bool = SHOW_CHUNKS):
 		for j in hm[i].size():
 			if show_chunks: set_column(i,j,hm[i][j],"WHITE" if (i/CHUNK_SIZE + j/CHUNK_SIZE)%2 == 0 else "BLACK")
 			else: 
-				var type =  "SNOW" if hm[i][j] > 3*MAX_HEIGHT/4 else \
+				var type =  "STONE" if hm[i][j] > 3*MAX_HEIGHT/4 else \
 							"GRASS" if hm[i][j] > MAX_HEIGHT/2 else \
 							"GRASS" if hm[i][j] > MAX_HEIGHT/4 else \
 							"WOOD"
@@ -255,9 +256,9 @@ func extend_curve(chunk_coords, block_coords, dir, path):
 	
 	
 	plotQuadBezier(block_coords.x, block_coords.y, x1, y1, x2, y2, path)
-	var start_point = Vector3(block_coords.x,heightmap[block_coords.x][block_coords.y],block_coords.y)
-	var mid_point = Vector3(x1,heightmap[x1][y1],y1)
-	var end_point = Vector3(x2,heightmap[x2][y2],y2)
+	var start_point = Vector3(block_coords.x,heightmap[block_coords.x][block_coords.y],block_coords.y) * WORLD_SCALE
+	var mid_point = Vector3(x1,heightmap[x1][y1],y1) * WORLD_SCALE
+	var end_point = Vector3(x2,heightmap[x2][y2],y2) * WORLD_SCALE
 	road_path.push_back([start_point,mid_point,end_point])
 	
 	if SHOW_CURVE_HANDLES:
