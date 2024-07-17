@@ -14,9 +14,14 @@ var CHUNK_COUNT
 var MAX_HEIGHT
 var PATH_RADIUS
 var PATH_TILE
+
+### CONST SETTINGS ###
 const TREE_ODDS = 10
 const MIN_TREE_SPACING = 5
-const WORLD_SCALE = Vector3(.5,.25,.5)
+const WORLD_SCALE = Vector3(1,.5,1)
+const MESH_LIB = preload("res://world/map/1m_tiles.tres")
+#const WORLD_SCALE = Vector3(.5,.25,.5)
+#const MESH_LIB = preload("res://world/map/halfm_tiles.tres")
 
 signal finished
 var heightmap = []
@@ -35,7 +40,7 @@ func _init(cs: int = 16, cc: int = 16, mh: int = 10, pr: int = 2, pt: String = "
 	MAX_HEIGHT = mh * int(not dm)
 	PATH_RADIUS = pr
 	PATH_TILE = pt
-	MAP_GRID.mesh_library = load("res://world/map/halfm_tiles.tres")
+	MAP_GRID.mesh_library = MESH_LIB
 	MAP_GRID.set_cell_size(WORLD_SCALE)
 	MAP_GRID.position = Vector3(-0.5,0,-0.5)
 	SHOW_CHUNKS = dm
@@ -53,7 +58,7 @@ func stop_thread():
 func generate_map():
 	MAP_GRID.clear()
 	generate_chunks()
-	generate_forest()
+	if not SHOW_CHUNKS: generate_forest()
 	#generate_directed_curve("WATER")
 	generate_directed_curve(PATH_TILE)
 	finished.emit()
@@ -80,10 +85,10 @@ func set_column(x, y, z, type):
 		i += 1
 
 func set_path(x, y, type):
-	var i_min = 0 if x % (CHUNK_SIZE*CHUNK_COUNT) == 0 else 1-PATH_RADIUS
-	var j_min = 0 if y % (CHUNK_SIZE*CHUNK_COUNT) == 0 else 1-PATH_RADIUS
-	var i_max = 1 if (x+1) % (CHUNK_SIZE*CHUNK_COUNT) == 0 else PATH_RADIUS
-	var j_max = 1 if (y+1) % (CHUNK_SIZE*CHUNK_COUNT) == 0 else PATH_RADIUS
+	var i_min = -min(x, PATH_RADIUS)
+	var j_min = -min(y, PATH_RADIUS)
+	var i_max = min(CHUNK_SIZE*CHUNK_COUNT - x, PATH_RADIUS+1)
+	var j_max = min(CHUNK_SIZE*CHUNK_COUNT - y, PATH_RADIUS+1)
 	var height = 0.0
 	
 	for i in range(i_min, i_max):
@@ -229,33 +234,31 @@ func generate_directed_curve(tile):
 ### PLOT CURVE AGAINST TILE GRID ###
 func extend_curve(chunk_coords, block_coords, dir, path):
 	var offset = chunk_coords * CHUNK_SIZE
-	var rand = FOOL.range_i(0, CHUNK_SIZE - 1)
+	var rand = FOOL.range_i(CHUNK_SIZE * 1/4, CHUNK_SIZE * 3/4)
 	var x1 
 	var y1 
 	var x2
 	var y2 
 	
-	x1 = FOOL.range_i(1, CHUNK_SIZE - 2) + offset.x
-	y1 = FOOL.range_i(1, CHUNK_SIZE - 2) + offset.y
+	x1 = FOOL.range_i(CHUNK_SIZE * 1/4.0, CHUNK_SIZE * 3/4.0) + offset.x
+	y1 = FOOL.range_i(CHUNK_SIZE * 1/4.0, CHUNK_SIZE * 3/4.0) + offset.y
 	x2 = ((abs(dir.x)*((1+dir.x)/2)*(CHUNK_SIZE-1)))+((1-abs(dir.x))*rand) + offset.x
 	y2 = ((abs(dir.y)*((1+dir.y)/2)*(CHUNK_SIZE-1)))+((1-abs(dir.y))*rand) + offset.y
 	
-	#if block_coords.x==x1 and x1==x2:
-		#x1 += 1 if x1 != CHUNK_SIZE - 2 else -1
-	#if block_coords.y==y1 and y1==y2:
-		#y1 += 1 if y1 != CHUNK_SIZE - 2 else -1
-		
-	if (block_coords-Vector2(x1,y1)).normalized() == (Vector2(x1,y1)-Vector2(x2,y2)).normalized():
-		if FOOL.range_i(0,1): x1 += 1 if x1 != CHUNK_SIZE - 2 else -1
-		else: y1 += 1 if y1 != CHUNK_SIZE - 2 else -1
+	var linear_max = 0.25
+	if  (block_coords-Vector2(x1,y1)).normalized().dot((Vector2(x1,y1)-Vector2(x2,y2)).normalized()) > linear_max:
+		print(chunk_coords, " too linear: ", (block_coords-Vector2(x1,y1)).normalized().dot((Vector2(x1,y1)-Vector2(x2,y2)).normalized()))
+		#if FOOL.range_i(0,1): x1 += 1 if x1 != CHUNK_SIZE - 2 else -1
+		#else: y1 += 1 if y1 != CHUNK_SIZE - 2 else -1
 	
 	while abs(block_coords.x-x2) + abs(block_coords.y-y2) < CHUNK_SIZE/2:
 		rand = FOOL.range_i(0, CHUNK_SIZE - 1)
+		# the goat of an equation. never touch this. its too perfect
 		x2 = ((abs(dir.x)*((1+dir.x)/2)*(CHUNK_SIZE-1)))+((1-abs(dir.x))*rand) + offset.x
 		y2 = ((abs(dir.y)*((1+dir.y)/2)*(CHUNK_SIZE-1)))+((1-abs(dir.y))*rand) + offset.y
 	
-	
 	plotQuadBezier(block_coords.x, block_coords.y, x1, y1, x2, y2, path)
+	
 	var start_point = Vector3(block_coords.x,heightmap[block_coords.x][block_coords.y],block_coords.y) * WORLD_SCALE
 	var mid_point = Vector3(x1,heightmap[x1][y1],y1) * WORLD_SCALE
 	var end_point = Vector3(x2,heightmap[x2][y2],y2) * WORLD_SCALE
@@ -267,7 +270,8 @@ func extend_curve(chunk_coords, block_coords, dir, path):
 		MAP_GRID.set_cell_item(start_point+Vector3(0,HANDLE_HEIGHT,0), TILES[color])
 		MAP_GRID.set_cell_item(mid_point+Vector3(0,HANDLE_HEIGHT,0), TILES[color])
 		MAP_GRID.set_cell_item(end_point+Vector3(0,HANDLE_HEIGHT,0), TILES[color])
-	return Vector2(x2, y2) + dir
+	
+	return [Vector2(x2, y2) + dir, Vector2(x2, y2) - Vector2(x1, y1)]
 
 
 

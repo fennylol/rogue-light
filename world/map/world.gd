@@ -31,12 +31,12 @@ var Caravan = preload("res://entities/caravan/caravan.gd")
 #       |       |       #
 #       |       |       #
 # # # # # # # # # # # # #
-const CHUNK_SIZE = 32
-const CHUNK_COUNT = 8
+const CHUNK_SIZE = 64
+const CHUNK_COUNT = 4
 const MAX_HEIGHT = 40
-const PATH_RADIUS = 2
+const PATH_RADIUS = 2 #dist past the centerline on either side. path will be 2r+1 tiles wide
 const PATH_TILE = "PATH"
-const DEBUG_MODE = false
+const DEBUG_MODE = true
 var WORLD_BUILDER = WorldBuilder.new(CHUNK_SIZE, CHUNK_COUNT, MAX_HEIGHT, PATH_RADIUS, PATH_TILE, DEBUG_MODE)
 var TREES = []
 
@@ -53,7 +53,7 @@ enum {AM, PM}
 enum {HOUR, MINUTE, PERIOD, DAY}
 var SHIPPING_SCHEDULE: Vector4i = Vector4i(13,14,0,0)
 const SCHEDULE_LENGTH = 2
-const CARAVAN_TIME_TO_COMPLETE = 10.0
+const CARAVAN_MPS = 4 #meters/sec
 
 
 func _ready(): 
@@ -68,8 +68,8 @@ func recieve_orders(orders: Dictionary):
 
 
 func _process(delta):
-	if DUKE.PAUSED: return
 	move_camera(delta)
+	if DUKE.PAUSED: return
 	var fade_material: Material = MAP_GRID.mesh_library.get_item_mesh(ARCHIVIST.TILE_NAMES["TALL_PINE"]).surface_get_material(0)
 	if fade_material is ShaderMaterial:
 		fade_material.set_shader_parameter("player_position", PLAYER.global_transform.origin)
@@ -123,12 +123,12 @@ func send_shipment():
 	path3d.set_curve(Curve3D.new())
 	
 	for points in path:
-		path3d.curve.add_point(points[0], Vector3.ZERO, points[1]-points[0])
-		path3d.curve.add_point(points[2], points[1]-points[2])
+		path3d.curve.add_point(points[0], Vector3.ZERO, (points[1]-points[0])*0.8)
+		path3d.curve.add_point(points[2], (points[1]-points[2])*0.8)
 	
 	
 	#path3d.position.y += 2.5
-	var caravan = Caravan.init(CARAVAN_TIME_TO_COMPLETE)
+	var caravan = Caravan.init(path3d.curve.get_baked_length()/CARAVAN_MPS)
 	path3d.add_child(caravan)
 	WORLD.add_child(path3d)
 
@@ -146,7 +146,7 @@ func on_map_generation_finished():
 
 
 func center_player():
-	var midpoint = CHUNK_COUNT/4.0 * CHUNK_SIZE as int
+	var midpoint = CHUNK_COUNT/2.0 * CHUNK_SIZE as int
 	
 	PLAYER.position = Vector3(midpoint, WORLD_BUILDER.get_heightmap()[midpoint][midpoint]+2, midpoint)
 	reset_camera()
