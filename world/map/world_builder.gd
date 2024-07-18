@@ -18,10 +18,10 @@ var PATH_TILE
 ### CONST SETTINGS ###
 const TREE_ODDS = 10
 const MIN_TREE_SPACING = 5
-const WORLD_SCALE = Vector3(1,.5,1)
-const MESH_LIB = preload("res://world/map/1m_tiles.tres")
-#const WORLD_SCALE = Vector3(.5,.25,.5)
-#const MESH_LIB = preload("res://world/map/halfm_tiles.tres")
+#const WORLD_SCALE = Vector3(1,.5,1)
+#const MESH_LIB = preload("res://world/map/1m_tiles.tres")
+const WORLD_SCALE = Vector3(.5,.25,.5)
+const MESH_LIB = preload("res://world/map/halfm_tiles.tres")
 
 signal finished
 var heightmap = []
@@ -195,7 +195,7 @@ func generate_directed_curve(tile):
 			else: term_chunk_coords.y -= CHUNK_COUNT/2
 	
 	# trace first leg
-	var next_starting_point = org_block
+	var next_curve_data = [org_block, Vector2.ZERO]
 	var move_x 
 	var dist
 	var dir
@@ -207,7 +207,7 @@ func generate_directed_curve(tile):
 		dir = Vector2(dist.x/abs(dist.x) * move_x, dist.y/abs(dist.y) * (1-move_x))
 		if is_nan(dir.x): dir.x = 0
 		if is_nan(dir.y): dir.y = 0  
-		next_starting_point = extend_curve(org_chunk_coords, next_starting_point, dir, tile)
+		next_curve_data = extend_curve(org_chunk_coords, next_curve_data, dir, tile)
 		org_chunk_coords += dir
 	
 	while org_chunk_coords != term_chunk_coords:
@@ -218,21 +218,23 @@ func generate_directed_curve(tile):
 		dir = Vector2(dist.x/abs(dist.x) * move_x, dist.y/abs(dist.y) * (1-move_x))
 		if is_nan(dir.x): dir.x = 0
 		if is_nan(dir.y): dir.y = 0  
-		next_starting_point = extend_curve(org_chunk_coords, next_starting_point, dir, tile)
+		next_curve_data = extend_curve(org_chunk_coords, next_curve_data, dir, tile)
 		org_chunk_coords += dir
 
 	if term_edge == 0: dir = Vector2(0, -1)
 	elif term_edge == 1: dir = Vector2(1, 0)
 	elif term_edge == 2: dir = Vector2(0, 1)
 	else: dir = Vector2(-1, 0)
-	extend_curve(org_chunk_coords, next_starting_point, dir, tile)
+	extend_curve(org_chunk_coords, next_curve_data, dir, tile)
 
 
 
 
 
 ### PLOT CURVE AGAINST TILE GRID ###
-func extend_curve(chunk_coords, block_coords, dir, path):
+func extend_curve(chunk_coords, curve_data, dir, path):
+	var block_coords = curve_data[0]
+	var mid_vector = curve_data[1]
 	var offset = chunk_coords * CHUNK_SIZE
 	var rand = FOOL.range_i(CHUNK_SIZE * 1/4, CHUNK_SIZE * 3/4)
 	var x1 
@@ -240,16 +242,28 @@ func extend_curve(chunk_coords, block_coords, dir, path):
 	var x2
 	var y2 
 	
-	x1 = FOOL.range_i(CHUNK_SIZE * 1/4.0, CHUNK_SIZE * 3/4.0) + offset.x
-	y1 = FOOL.range_i(CHUNK_SIZE * 1/4.0, CHUNK_SIZE * 3/4.0) + offset.y
+	if mid_vector == Vector2.ZERO:
+		x1 = FOOL.range_i(CHUNK_SIZE * 1/4.0, CHUNK_SIZE * 3/4.0) + offset.x
+		y1 = FOOL.range_i(CHUNK_SIZE * 1/4.0, CHUNK_SIZE * 3/4.0) + offset.y
+	else: 
+		var dist_from_edge = 16.0 # a DFE=4 would range from 1/4th - 3/4th of the chunks area as valid. DFE=10 -> 1/10th - 9/10th
+		var midpoint_dist = FOOL.range_f(CHUNK_SIZE/4, CHUNK_SIZE)
+		mid_vector = (mid_vector.normalized() * midpoint_dist) + block_coords
+		x1 = int(min(max(mid_vector.x, 0), CHUNK_SIZE*CHUNK_COUNT-1))
+		y1 = int(min(max(mid_vector.y, 0), CHUNK_SIZE*CHUNK_COUNT-1))
+		#x1 = int(min(max(mid_vector.x, offset.x+CHUNK_SIZE*1/dist_from_edge), offset.x+CHUNK_SIZE*(dist_from_edge-1)/dist_from_edge)) 
+		#y1 = int(min(max(mid_vector.y, offset.y+CHUNK_SIZE*1/dist_from_edge), offset.y+CHUNK_SIZE*(dist_from_edge-1)/dist_from_edge)) 
+	
 	x2 = ((abs(dir.x)*((1+dir.x)/2)*(CHUNK_SIZE-1)))+((1-abs(dir.x))*rand) + offset.x
 	y2 = ((abs(dir.y)*((1+dir.y)/2)*(CHUNK_SIZE-1)))+((1-abs(dir.y))*rand) + offset.y
 	
-	var linear_max = 0.25
-	if  (block_coords-Vector2(x1,y1)).normalized().dot((Vector2(x1,y1)-Vector2(x2,y2)).normalized()) > linear_max:
-		print(chunk_coords, " too linear: ", (block_coords-Vector2(x1,y1)).normalized().dot((Vector2(x1,y1)-Vector2(x2,y2)).normalized()))
+	#var linear_max = 0.5
+	#var linear_iter = 0
+	#while  (block_coords-Vector2(x1,y1)).normalized().dot((Vector2(x1,y1)-Vector2(x2,y2)).normalized()) > linear_max:
+		#linear_iter += 1
 		#if FOOL.range_i(0,1): x1 += 1 if x1 != CHUNK_SIZE - 2 else -1
 		#else: y1 += 1 if y1 != CHUNK_SIZE - 2 else -1
+	#if linear_iter: print("iterations to correct ", chunk_coords, ": ", linear_iter)
 	
 	while abs(block_coords.x-x2) + abs(block_coords.y-y2) < CHUNK_SIZE/2:
 		rand = FOOL.range_i(0, CHUNK_SIZE - 1)

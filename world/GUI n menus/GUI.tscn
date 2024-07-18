@@ -1,8 +1,10 @@
-[gd_scene load_steps=9 format=3 uid="uid://83cqsdl8tpcn"]
+[gd_scene load_steps=11 format=3 uid="uid://83cqsdl8tpcn"]
 
 [ext_resource type="FontFile" uid="uid://draw0t2cfc7oc" path="res://world/GUI n menus/Shantell_Sans-Informal_Bouncy_Light_Italic.otf" id="1_30r3m"]
 [ext_resource type="Script" path="res://world/GUI n menus/GUI.gd" id="1_jfud4"]
 [ext_resource type="Texture2D" uid="uid://beayby24bsr68" path="res://world/GUI n menus/clock_progress.png" id="2_qw2o7"]
+[ext_resource type="Texture2D" uid="uid://dfx310e6bw58f" path="res://world/GUI n menus/compass_progress.png" id="2_qwkvw"]
+[ext_resource type="Texture2D" uid="uid://c26og081da3o2" path="res://world/GUI n menus/compass_front.png" id="3_dwx3c"]
 [ext_resource type="Texture2D" uid="uid://bf6fo85g6h0k5" path="res://world/GUI n menus/clock_over.png" id="3_fdxp3"]
 [ext_resource type="Texture2D" uid="uid://cbfs0xwou1fq7" path="res://world/GUI n menus/input.png" id="5_rsew7"]
 
@@ -24,6 +26,26 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_jfud4")
+
+[node name="compass" type="Control" parent="."]
+custom_minimum_size = Vector2(128, 0)
+layout_mode = 1
+anchors_preset = 0
+offset_right = 128.0
+offset_bottom = 135.0
+
+[node name="compass_progress" type="TextureRect" parent="compass"]
+layout_mode = 1
+offset_right = 128.0
+offset_bottom = 128.0
+pivot_offset = Vector2(64, 64)
+texture = ExtResource("2_qwkvw")
+
+[node name="compass_front" type="TextureRect" parent="compass"]
+layout_mode = 1
+offset_right = 128.0
+offset_bottom = 128.0
+texture = ExtResource("3_dwx3c")
 
 [node name="time_zone" type="HBoxContainer" parent="."]
 layout_mode = 1

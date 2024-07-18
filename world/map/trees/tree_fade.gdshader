@@ -25,7 +25,7 @@ void fragment() {
 	// Calculate dot product
 	float dot_product = -dot(to_player, to_camera);
 
-	// If dot product is positive, the object is between player and camera
+	// If dot product is negative, the object is between player and camera
 	float past_distance = dist_to_player * dot_product;
 	
 	float fade = smoothstep(fade_begin, fade_end, past_distance);
@@ -38,7 +38,6 @@ void fragment() {
 	ALPHA = mix(1.0, fade_strength, fade);
 	ROUGHNESS = 1.0;
 	SPECULAR = 0.25;
-	//ALPHA_SCISSOR_THRESHOLD = fade/2.0;
 }
 
 void light() {

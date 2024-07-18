@@ -29,9 +29,9 @@ const COMMANDS = {
 	},
 	"resetworld": {
 		"accepted_options": {
-			"position": "FLAG - reset camera position to be centered on player",
-			"rotation": "FLAG - reset the rotation of the camera to face N",
-			"scale": "FLAG - reset the scale of camera to default"
+			"p": "FLAG - reset camera position to be centered on player",
+			"r": "FLAG - reset the rotation of the camera to face N",
+			"s": "FLAG - reset the scale of camera to default"
 		},
 		"desc": "regenerate terrain and optionally reset camera parameters"
 	},

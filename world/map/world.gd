@@ -31,29 +31,29 @@ var Caravan = preload("res://entities/caravan/caravan.gd")
 #       |       |       #
 #       |       |       #
 # # # # # # # # # # # # #
-const CHUNK_SIZE = 64
-const CHUNK_COUNT = 4
-const MAX_HEIGHT = 40
-const PATH_RADIUS = 2 #dist past the centerline on either side. path will be 2r+1 tiles wide
-const PATH_TILE = "PATH"
-const DEBUG_MODE = true
-var WORLD_BUILDER = WorldBuilder.new(CHUNK_SIZE, CHUNK_COUNT, MAX_HEIGHT, PATH_RADIUS, PATH_TILE, DEBUG_MODE)
+const CHUNK_SIZE: int = 64
+const CHUNK_COUNT: int = 8
+const MAX_HEIGHT: int = 40
+const PATH_RADIUS: int = 3 #dist past the centerline on either side. path will be 2r+1 tiles wide
+const PATH_TILE: String = "PATH"
+const DEBUG_MODE: bool = false
+var WORLD_BUILDER := WorldBuilder.new()
 var TREES = []
 
 
 ### CAMERA PARAMETERS ###
-var CAM_MAX_RANGE = 10
-const CAM_SIZE = 20
-var FADE_SETTINGS = Vector3(5.0, 20.0, 0.25) # begin dist, end dist, and min alpha
-var tracking = false
+const CAM_SIZE: float = 20
+const MIN_CAM_SIZE: float = 5
+const MAX_CAM_SIZE: float = 100
+var FADE_SETTINGS := Vector3(5.0, 20.0, 0.25) # begin dist, end dist, and min alpha
 
 
 #### TIME ###
 enum {AM, PM}
 enum {HOUR, MINUTE, PERIOD, DAY}
-var SHIPPING_SCHEDULE: Vector4i = Vector4i(13,14,0,0)
-const SCHEDULE_LENGTH = 2
-const CARAVAN_MPS = 4 #meters/sec
+var SHIPPING_SCHEDULE := Vector4i(13,14,0,0)
+const SCHEDULE_LENGTH: int = 2
+const CARAVAN_MPS: float = 4 #meters/sec
 
 
 func _ready(): 
@@ -63,7 +63,7 @@ func _ready():
 
 
 func recieve_orders(orders: Dictionary):
-	if orders.command_name == "resetworld": generate_map()
+	if orders.command_name == "resetworld": COMMAND_resetworld(orders.options)
 	elif orders.command_name == "setfade": COMMAND_setfade(orders.options)
 
 
@@ -126,30 +126,28 @@ func send_shipment():
 		path3d.curve.add_point(points[0], Vector3.ZERO, (points[1]-points[0])*0.8)
 		path3d.curve.add_point(points[2], (points[1]-points[2])*0.8)
 	
-	
 	#path3d.position.y += 2.5
 	var caravan = Caravan.init(path3d.curve.get_baked_length()/CARAVAN_MPS)
 	path3d.add_child(caravan)
 	WORLD.add_child(path3d)
 
-func generate_map():
+func generate_map(p: bool = true, r: bool = true, s: bool = true):
 	WORLD_BUILDER = WorldBuilder.new(CHUNK_SIZE, CHUNK_COUNT, MAX_HEIGHT, PATH_RADIUS, PATH_TILE, DEBUG_MODE)
 	WORLD_BUILDER.finished.connect(on_map_generation_finished)
 	WORLD_BUILDER.generate_map()
+	center_player(p,r,s)
 
 
 func on_map_generation_finished():
 	MAP_GRID.queue_free()
 	MAP_GRID = WORLD_BUILDER.get_map_grid()
 	WORLD.add_child(MAP_GRID)
-	center_player()
 
 
-func center_player():
-	var midpoint = CHUNK_COUNT/2.0 * CHUNK_SIZE as int
-	
+func center_player(p: bool = true, r: bool = true, s: bool = true):
+	var midpoint = CHUNK_COUNT/4.0 * CHUNK_SIZE as int
 	PLAYER.position = Vector3(midpoint, WORLD_BUILDER.get_heightmap()[midpoint][midpoint]+2, midpoint)
-	reset_camera()
+	reset_camera(p, r, s)
 
 
 func move_camera(delta):
@@ -169,7 +167,8 @@ func move_camera(delta):
 	var look_direction = (transform.basis * Vector3(look_input_dir.x, 0, look_input_dir.y)).normalized()
 	if look_direction:
 		CAMERA.rotation.y += look_direction.x * delta
-		if CAMERA.get_child(0).size > 5 or look_direction.z > 0: CAMERA.get_child(0).size += look_direction.z 
+		CAMERA.get_child(0).size = min(max(look_direction.z+CAMERA.get_child(0).size, MIN_CAM_SIZE), MAX_CAM_SIZE)
+		
 	
 	if Input.is_action_pressed("DEV"):
 		if Input.is_action_pressed("look_up") and Input.is_action_pressed("look_down"): reset_camera(false, false, true)
@@ -191,3 +190,10 @@ func COMMAND_setfade(options: Dictionary):
 	if options.has("end"): end = float(options.end[0])
 	if options.has("minalpha"): minalpha = float(options.minalpha[0])
 	FADE_SETTINGS = Vector3(begin, end, minalpha)
+
+
+func COMMAND_resetworld(options: Dictionary):
+	var r = true if options.has("r") else false
+	var s = true if options.has("s") else false
+	var p = true if options.has("p") else false
+	generate_map(p,r,s)

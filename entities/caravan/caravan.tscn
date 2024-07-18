@@ -7,9 +7,8 @@
 size = Vector3(8, 5.5, 4)
 
 [node name="Caravan" type="PathFollow3D"]
-rotation_mode = 2
 v_offset = 2.5
-cubic_interp = false
+rotation_mode = 2
 tilt_enabled = false
 script = ExtResource("1_0smmk")
 

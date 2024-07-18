@@ -8,9 +8,15 @@ enum {HOUR, MINUTE, PERIOD, DAY}
 
 @onready var text_display = $time_zone/text as VBoxContainer
 @onready var clock_display = $time_zone/clock/clock_progress as TextureRect
+
 @onready var input = $command_zone/input_zone as TextEdit
 @onready var command_zone = $command_zone as VBoxContainer
 @onready var output = $command_zone/bottom_log/output_zone as RichTextLabel
+
+@onready var compass_face = $compass/compass_progress as TextureRect
+var target_rotation: float = 0
+var undershot = true
+
 var DUKE = TheDuke
 var ARCHIVIST = TheArchivist
 
@@ -32,7 +38,39 @@ func recieve_orders(orders: Dictionary):
 	if orders.command_name == "run": pass
 	elif orders.command_name == "help": COMMAND_help(orders.options)
 
-func _process(_delta):
+func _process(delta):
+	move_compass(delta)
+	command_window()
+
+
+func update_display(TIME: Vector4i):
+	var hour = str(TIME[HOUR] if TIME[HOUR] else 12)  
+	var minute = str(TIME[MINUTE]).pad_zeros(2)
+	var period = "PM" if TIME[PERIOD] else "AM" 
+	text_display.get_child(0).text = hour + ":" + minute + " " + period
+	text_display.get_child(1).text = "day: " + str(TIME[DAY]) 
+	
+	hour = 12 - TIME[HOUR] + TIME[PERIOD]*12 
+	minute = TIME[MINUTE]
+	clock_display.rotation_degrees = hour*(360/24) - minute*(15.0/60.0)
+
+
+func move_compass(delta):
+	#var look_input_dir = Input.get_vector("look_left", "look_right", "look_up", "look_down")
+	#if look_input_dir:
+		#compass_face.rotation += look_input_dir.x * delta
+	var lerp_speed = .5* delta
+	var look_input_dir = Input.get_vector("look_left", "look_right", "look_up", "look_down")
+	if look_input_dir:
+		target_rotation += look_input_dir.x * delta
+	compass_face.rotation = lerp(compass_face.rotation, target_rotation, lerp_speed) 
+	
+
+
+func prepend_output_text(message): output.text = "- "+str(message)+"\n\n"+output.text
+
+
+func command_window():
 	if not command_zone.visible:
 		if Input.is_action_just_pressed("DEV_command"):
 			command_zone.visible = true
@@ -58,20 +96,6 @@ func _process(_delta):
 				CH_pointer -= 1 
 				input.text = your_input if CH_pointer == -1 else COMMAND_HISTORY[CH_pointer]
 
-
-func update_display(TIME: Vector4i):
-	var hour = str(TIME[HOUR] if TIME[HOUR] else 12)  
-	var minute = str(TIME[MINUTE]).pad_zeros(2)
-	var period = "PM" if TIME[PERIOD] else "AM" 
-	text_display.get_child(0).text = hour + ":" + minute + " " + period
-	text_display.get_child(1).text = "day: " + str(TIME[DAY]) 
-	
-	hour = 12 - TIME[HOUR] + TIME[PERIOD]*12 
-	minute = TIME[MINUTE]
-	clock_display.rotation_degrees = hour*(360/24) - minute*(15.0/60.0)
-
-func prepend_output_text(message):
-	output.text = "- "+str(message)+"\n\n"+output.text
 
 func COMMAND_help(options: Dictionary = {}):
 	if not options.has("command"):

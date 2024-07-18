@@ -19,7 +19,7 @@ signal command_dispatch(command: Dictionary)
 
 
 func process_dev_inputs(_delta):
-	if Input.is_action_just_pressed("DEV_refresh"): execute_command("/resetworld -position[true] -rotation[true] -scale[true]")
+	if Input.is_action_just_pressed("DEV_refresh"): execute_command("/resetworld")
 	if Input.is_action_just_pressed("DEV_time_warp"): change_world_tick_speed(TICK_SPEEDS["WARP"] if IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS != TICK_SPEEDS["WARP"] else TICK_SPEEDS["DEFAULT"] )
 	if Input.is_action_just_pressed("DEV_time_freeze"): change_world_tick_speed(TICK_SPEEDS["FROZEN"] if IN_GAME_MINUTE_LENGTH_IN_REAL_WORLD_SECONDS != TICK_SPEEDS["FROZEN"] else TICK_SPEEDS["DEFAULT"] )
 
