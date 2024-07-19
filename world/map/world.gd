@@ -32,7 +32,7 @@ var Caravan = preload("res://entities/caravan/caravan.gd")
 #       |       |       #
 # # # # # # # # # # # # #
 const CHUNK_SIZE: int = 64
-const CHUNK_COUNT: int = 8
+const CHUNK_COUNT: int = 2
 const MAX_HEIGHT: int = 40
 const PATH_RADIUS: int = 3 #dist past the centerline on either side. path will be 2r+1 tiles wide
 const PATH_TILE: String = "PATH"
@@ -46,7 +46,7 @@ const CAM_SIZE: float = 20
 const MIN_CAM_SIZE: float = 5
 const MAX_CAM_SIZE: float = 100
 var FADE_SETTINGS := Vector3(5.0, 20.0, 0.25) # begin dist, end dist, and min alpha
-
+var target_rotation = 0.0
 
 #### TIME ###
 enum {AM, PM}
@@ -166,9 +166,10 @@ func move_camera(delta):
 	var look_input_dir = Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	var look_direction = (transform.basis * Vector3(look_input_dir.x, 0, look_input_dir.y)).normalized()
 	if look_direction:
-		CAMERA.rotation.y += look_direction.x * delta
+		#CAMERA.rotation.y += look_direction.x * delta
+		target_rotation += look_direction.x * delta  
 		CAMERA.get_child(0).size = min(max(look_direction.z+CAMERA.get_child(0).size, MIN_CAM_SIZE), MAX_CAM_SIZE)
-		
+	CAMERA.rotation.y = lerp(CAMERA.rotation.y, target_rotation, 0.1)
 	
 	if Input.is_action_pressed("DEV"):
 		if Input.is_action_pressed("look_up") and Input.is_action_pressed("look_down"): reset_camera(false, false, true)

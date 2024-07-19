@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://d1uk3sxgrgtyh"]
+
+[ext_resource type="Script" path="res://world/GUI n menus/input_zone.gd" id="1_340k7"]
+
+[sub_resource type="Theme" id="Theme_ojbx6"]
+
+[node name="input_zone" type="TextEdit"]
+custom_minimum_size = Vector2(0, 35)
+theme = SubResource("Theme_ojbx6")
+placeholder_text = "/help for list of commands"
+script = ExtResource("1_340k7")
