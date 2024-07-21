@@ -47,7 +47,6 @@ func _physics_process(delta):
 	
 	if not is_on_floor(): velocity.y -= 5 * gravity * delta
 	
-
 	
 	if direction:
 		velocity.x = direction.x * SPEED
@@ -58,14 +57,10 @@ func _physics_process(delta):
 		MESH.rotation.y = move_toward(MESH.rotation.y, angle, delta*ROTATION_SPEED)
 		last_direction = Vector3(input_dir.x, 0, input_dir.y).normalized()
 	else:
-		SMOKE_TRAIL.emitting = false
 		velocity.x = move_toward(velocity.x, 0, SPEED**2*delta)
 		velocity.z = move_toward(velocity.z, 0, SPEED**2*delta)
 	
-	if velocity and is_on_floor():
-		SMOKE_TRAIL.emitting = true
-	else: 
-		SMOKE_TRAIL.emitting = false
+	SMOKE_TRAIL.emitting = velocity.length() > 0.9*SPEED
 	
 	move_and_slide()
 

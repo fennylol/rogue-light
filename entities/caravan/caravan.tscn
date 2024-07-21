@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://bjnimjn3nfv7p" path="res://entities/caravan/horts.glb" id="3_p3f7d"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_qtgm4"]
-size = Vector3(8, 5.5, 4)
+size = Vector3(8, 6.53857, 4)
 
 [node name="Caravan" type="PathFollow3D"]
 v_offset = 2.5
@@ -18,14 +18,6 @@ script = ExtResource("1_0smmk")
 transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 0)
 rotation_order = 0
 
-[node name="RigidBody3D" type="RigidBody3D" parent="."]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 0)
-rotation_order = 0
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.14838, 0)
-shape = SubResource("BoxShape3D_qtgm4")
-
 [node name="horts" parent="." instance=ExtResource("3_p3f7d")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.5, -7)
 
@@ -37,3 +29,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.5, -12)
 
 [node name="horts4" parent="." instance=ExtResource("3_p3f7d")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0.5, -12)
+
+[node name="AnimatableBody3D" type="AnimatableBody3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="AnimatableBody3D"]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 1.62909, 0)
+shape = SubResource("BoxShape3D_qtgm4")
+
+[node name="RemoteTransform3D" type="RemoteTransform3D" parent="."]
+remote_path = NodePath("../AnimatableBody3D")
