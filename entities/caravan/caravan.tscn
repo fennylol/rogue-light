@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3 uid="uid://fssa0tkmrviw"]
+[gd_scene load_steps=5 format=3 uid="uid://fssa0tkmrviw"]
 
 [ext_resource type="Script" path="res://entities/caravan/caravan.gd" id="1_0smmk"]
 [ext_resource type="PackedScene" uid="uid://dbjjw7nxppivt" path="res://entities/caravan/caravan.glb" id="1_145h4"]
+[ext_resource type="PackedScene" uid="uid://bjnimjn3nfv7p" path="res://entities/caravan/horts.glb" id="3_p3f7d"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_qtgm4"]
 size = Vector3(8, 5.5, 4)
@@ -9,6 +10,7 @@ size = Vector3(8, 5.5, 4)
 [node name="Caravan" type="PathFollow3D"]
 v_offset = 2.5
 rotation_mode = 2
+loop = false
 tilt_enabled = false
 script = ExtResource("1_0smmk")
 
@@ -23,3 +25,15 @@ rotation_order = 0
 [node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.14838, 0)
 shape = SubResource("BoxShape3D_qtgm4")
+
+[node name="horts" parent="." instance=ExtResource("3_p3f7d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.5, -7)
+
+[node name="horts2" parent="." instance=ExtResource("3_p3f7d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0.5, -7)
+
+[node name="horts3" parent="." instance=ExtResource("3_p3f7d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.5, -12)
+
+[node name="horts4" parent="." instance=ExtResource("3_p3f7d")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0.5, -12)

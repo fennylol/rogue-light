@@ -1,0 +1,75 @@
+[gd_scene load_steps=6 format=3 uid="uid://cpxaw5tb41bbg"]
+
+[ext_resource type="Script" path="res://points_of_interest/the_forest/world.gd" id="1_ojsoe"]
+[ext_resource type="PackedScene" uid="uid://colwxwbes7ubn" path="res://entities/player/bandit.tscn" id="2_qb25q"]
+[ext_resource type="MeshLibrary" uid="uid://dxw4swdbv05fa" path="res://points_of_interest/the_forest/1m_tiles.tres" id="4_fhid5"]
+[ext_resource type="PackedScene" uid="uid://83cqsdl8tpcn" path="res://GUI/GUI.tscn" id="5_wo31t"]
+
+[sub_resource type="Environment" id="Environment_clwrb"]
+background_color = Color(0.384314, 0.737255, 0.835294, 1)
+
+[node name="World" type="Node3D"]
+script = ExtResource("1_ojsoe")
+
+[node name="Bandit" parent="." instance=ExtResource("2_qb25q")]
+
+[node name="camera_man" type="Node3D" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="camera_man"]
+transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, 155, 220)
+projection = 1
+current = true
+size = 20.0
+
+[node name="world_parts" type="Node3D" parent="."]
+
+[node name="GridMap" type="GridMap" parent="world_parts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, -0.5)
+mesh_library = ExtResource("4_fhid5")
+cell_size = Vector3(1, 1, 1)
+data = {
+"cells": PackedInt32Array(65536, 65519, 2, 131057, 0, 2, 131056, 0, 2, 131055, 0, 2, 65536, 65521, 2, 65536, 65520, 2, 327680, 0, 2, 393216, 0, 2, 131071, 0, 2, 65536, 65535, 2, 131071, 2, 2, 131071, 4, 2, 131071, 6, 2, 131071, 8, 2, 131071, 10, 2, 131071, 12, 2, 131071, 14, 2, 131071, 16, 2, 65538, 65535, 2, 65540, 65535, 2, 65542, 65535, 2, 65544, 65535, 2, 65546, 65535, 2, 65548, 65535, 2, 65550, 65535, 2, 65552, 65535, 2, 196607, 6, 6)
+}
+metadata/_editor_floor_ = Vector3(0, 2, 0)
+
+[node name="lights" type="Node3D" parent="world_parts"]
+transform = Transform3D(-1, 0, -1.50996e-07, 0, 1, 0, 1.50996e-07, 0, -1, 0, 0, 0)
+
+[node name="heavenly_bodies" type="Node3D" parent="world_parts/lights"]
+rotation_order = 5
+
+[node name="sun" type="DirectionalLight3D" parent="world_parts/lights/heavenly_bodies"]
+transform = Transform3D(-0.833163, -0.553011, 0.00421784, -0.236296, 0.362877, 0.901379, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+light_color = Color(1, 0.909804, 0.74902, 1)
+shadow_enabled = true
+
+[node name="moon" type="DirectionalLight3D" parent="world_parts/lights/heavenly_bodies"]
+transform = Transform3D(0.832696, 0.553725, -0.00244082, 0.237938, -0.361786, -0.901386, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+light_color = Color(0.285468, 0.497749, 0.559615, 1)
+light_energy = 0.0
+shadow_enabled = true
+
+[node name="static_lights" type="Node3D" parent="world_parts/lights"]
+
+[node name="rising" type="DirectionalLight3D" parent="world_parts/lights/static_lights"]
+transform = Transform3D(-4.35451e-08, 0.0871557, -0.996195, 3.8097e-09, 0.996195, 0.0871557, 1, 0, -4.37114e-08, 0, 0, 0)
+rotation_order = 5
+light_color = Color(0.972009, 0.464692, 0.43546, 1)
+light_energy = 0.0
+
+[node name="setting" type="DirectionalLight3D" parent="world_parts/lights/static_lights"]
+transform = Transform3D(-4.37114e-08, -0.0871557, 0.996195, 0, 0.996195, 0.0871557, -1, 3.8097e-09, -4.35451e-08, 0, 0, 0)
+rotation_order = 5
+light_color = Color(0.923439, 0.614489, 0, 1)
+light_energy = 0.0
+
+[node name="ambient_light" type="DirectionalLight3D" parent="world_parts/lights/static_lights"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0)
+rotation_order = 5
+light_color = Color(0.286275, 0.498039, 0.560784, 1)
+light_energy = 0.05
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="world_parts"]
+environment = SubResource("Environment_clwrb")
+
+[node name="Gui" parent="." instance=ExtResource("5_wo31t")]

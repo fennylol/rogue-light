@@ -1,0 +1,22 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://ymccg6yalfy7"
+path="res://.godot/imported/tall_pine.obj-32bc51caf9b7c29511a6b644428dc7b0.mesh"
+
+[deps]
+
+files=["res://.godot/imported/tall_pine.obj-32bc51caf9b7c29511a6b644428dc7b0.mesh"]
+
+source_file="res://points_of_interest/the_forest/trees/tall_pine.obj"
+dest_files=["res://.godot/imported/tall_pine.obj-32bc51caf9b7c29511a6b644428dc7b0.mesh", "res://.godot/imported/tall_pine.obj-32bc51caf9b7c29511a6b644428dc7b0.mesh"]
+
+[params]
+
+generate_tangents=true
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+optimize_mesh=true
+force_disable_mesh_compression=false

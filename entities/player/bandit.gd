@@ -15,6 +15,7 @@ var last_jump_coords = Vector3.ZERO
 var is_banned_from_jumping = false
 @onready var MESH = $bandit
 @onready var SMOKE_TRAIL = $bandit/GPUParticles3D
+@onready var FPV = $bandit/Camera3D as Camera3D
 var DUKE = TheDuke
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
@@ -72,3 +73,4 @@ func reset_rotation():
 	rotation.y = 0
 	MESH.rotation.y = PI/2
 
+func enable_camera(state: bool = true):FPV.set_current(state)
