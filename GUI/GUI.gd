@@ -54,8 +54,8 @@ func update_time_display(TIME: Vector4i):
 
 
 func update_compass_display(delta):
-	var damping_factor = 0.99
-	var spring_strength: float = 10.0 
+	var damping_factor = 0.975
+	var spring_strength: float = 5.0 
 	
 	var diff = target_rotation - compass_face.rotation
 	var acceleration = spring_strength * diff
@@ -65,7 +65,7 @@ func update_compass_display(delta):
 	compass_face.rotation += angular_velocity * delta
 	
 	if abs(diff) < 0.001 and abs(angular_velocity) < 0.001:
-		rotation = target_rotation
+		compass_face.rotation = target_rotation
 		angular_velocity = 0.0
 
 
