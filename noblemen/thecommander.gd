@@ -21,7 +21,7 @@ static func parse_command_string(input: String) -> Dictionary:
 	
 	for option_match in option_regex.search_all(options_string):
 		var option_name = option_match.get_string(1)
-		var option_data = option_match.get_string(2).split(",") if option_match.get_string(2) else []
+		var option_data = Array(option_match.get_string(2).split(",")) if option_match.get_string(2) else []
 		#options.push_back({"option_name": option_name, "option_data": option_data})
 		options[option_name] = option_data
 	

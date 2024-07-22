@@ -20,15 +20,8 @@ var DUKE = TheDuke
 var gravity = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 func _physics_process(delta):
-
 	var input_dir = Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	var look_input_dir = Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	var direction = (transform.basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
-	var look_direction = (Vector3(look_input_dir.x, 0, look_input_dir.y)).normalized()
-	
-	if look_direction:
-		rotation.y += look_direction.x * delta
-		MESH.rotation.y -= look_direction.x * delta
 	
 	if DUKE.PAUSED: return
 	
@@ -63,6 +56,10 @@ func _physics_process(delta):
 	SMOKE_TRAIL.emitting = velocity.length() > 0.9*SPEED
 	
 	move_and_slide()
+
+func rotate_player(amount: float):
+	rotation.y += amount
+	MESH.rotation.y -= amount
 
 func reset_rotation():
 	rotation.y = 0

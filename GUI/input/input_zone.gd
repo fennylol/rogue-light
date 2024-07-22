@@ -24,7 +24,7 @@ func _ready():
 	text_changed.connect(_on_text_changed)
 
 
-func _process(delta):
+func _process(_delta):
 	if get_parent().visible:
 		if Input.is_action_just_pressed("submit"):
 			var command = text.strip_edges()

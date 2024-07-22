@@ -2,7 +2,7 @@ extends Node
 
 var DUKE = TheDuke
 var rng := RandomNumberGenerator.new()
-var STARTER_SEED: int = Time.get_unix_time_from_system()
+var STARTER_SEED: int = int(Time.get_unix_time_from_system())
 
 func _ready():
 	set_seed(STARTER_SEED)
@@ -24,5 +24,5 @@ func COMMAND_seed(options: Dictionary):
 	if options.size() == 0: print("improper usage")
 	if options.has("set"):
 		if options["set"].size()>0: set_seed(int(options["set"][0]))
-		else : set_seed(Time.get_unix_time_from_system())
+		else : set_seed(int(Time.get_unix_time_from_system()))
 	if options.has("get"): print("/seed -set[", rng.seed,"]")

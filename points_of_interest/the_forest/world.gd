@@ -1,6 +1,13 @@
 extends Node3D
 ### WISHLIST ###
-# [ ] caravan
+# [caravan]
+#  L [x] follows path
+#  L [x] ridable (cash money)
+#  L [ ] sits on ground nicely
+#  L [ ] other actor aware (slows/stop if something is in front etc)
+#  L [ ] drops loot
+#  L [ ] comes with body guards
+#  L [ ] reacts to how player has been attacking it
 # [ ] collect resources
 # [x] camera improvements
 
@@ -18,19 +25,6 @@ var Caravan = preload("res://entities/caravan/caravan.gd")
 @onready var STATIC_LIGHTS = $world_parts/lights/static_lights as Node3D
 
 ### WORLD GEN PARAMETERS ###
-# # # # # # # # # # # # #
-# + > X |       |       #
-# v     |       |       #
-# Z     |       |       #
-# - - - + - - - + - - - #
-#       |       |       #
-#       |       |       #
-#       |       |       #
-# - - - + - - - + - - - #
-#       |       |       #
-#       |       |       #
-#       |       |       #
-# # # # # # # # # # # # #
 const CHUNK_SIZE: int = 64
 const CHUNK_COUNT: int = 4
 const MAX_HEIGHT: int = 40
@@ -40,13 +34,19 @@ const DEBUG_MODE: bool = false
 var MASTER_OF_WORKS := MasterOfWorks.new()
 
 
-
 ### CAMERA PARAMETERS ###
 const CAM_SIZE: float = 20
 const MIN_CAM_SIZE: float = 5
 const MAX_CAM_SIZE: float = 100
-var FADE_SETTINGS := Vector3(5.0, 20.0, 0.25) # begin dist, end dist, and min alpha
+var target_size: float = CAM_SIZE
+
+const MAX_PITCH: float = 0.5
 var target_rotation: float = 0.0
+var target_pitch: float = 0.0
+var mouse_pos := Vector2.ZERO
+
+var FADE_SETTINGS := Vector3(5.0, 20.0, 0.25) # begin dist, end dist, and min alpha
+
 
 #### TIME/CARAVAN ###
 enum {AM, PM}
@@ -141,7 +141,7 @@ func send_shipment():
 
 
 func generate_map(r: bool = true, s: bool = true):
-	if WORLD.get_node("road_path"): WORLD.get_node("road_path").queue_free()
+	if WORLD.get_node_or_null("road_path"): WORLD.get_node("road_path").queue_free()
 	var on_map_generation_finished = func():
 		MAP_GRID.queue_free()
 		MAP_GRID = MASTER_OF_WORKS.get_map_grid()
@@ -174,23 +174,55 @@ func move_camera(delta):
 	var lerp_speed_z = ((diff_z/(CAMERA.get_child(0).size/4))**2.0)*delta
 	CAMERA.position.z = lerpf(CAMERA.position.z, PLAYER.position.z, lerp_speed_z)
 	
-	var look_input_dir = Input.get_vector("look_left", "look_right", "look_up", "look_down")
-	var look_direction = (transform.basis * Vector3(look_input_dir.x, 0, look_input_dir.y)).normalized()
-	if look_direction:
-		#CAMERA.rotation.y += look_direction.x * delta
-		target_rotation += look_direction.x * delta  
-		if CAMERA.get_child(0).get_projection() == Camera3D.PROJECTION_ORTHOGONAL:
-			CAMERA.get_child(0).size = min(max(look_direction.z+CAMERA.get_child(0).size, MIN_CAM_SIZE), MAX_CAM_SIZE)
-		else: 
-			CAMERA.get_child(0).position.y += look_direction.z * delta * CAMERA.get_child(0).position.y
-			CAMERA.get_child(0).position.z += look_direction.z * delta * CAMERA.get_child(0).position.z
+	if Input.is_action_just_released("move_cam"): 
+		Input.warp_mouse(mouse_pos) 
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+	elif Input.is_action_just_pressed("move_cam"):
+		mouse_pos = get_viewport().get_mouse_position()
+		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+		#var pos =
+		#if pos.x + 1 >= get_viewport().size.x: Input.warp_mouse(Vector2(1,pos.y))
+		#elif pos.x <= 0: Input.warp_mouse(Vector2(get_viewport().size.x,pos.y-1))
+		#
+		#if pos.y + 1 >= get_viewport().size.y: Input.warp_mouse(Vector2(pos.x,1))
+		#elif pos.y <= 0: Input.warp_mouse(Vector2(pos.x,get_viewport().size.y-1))
+	
+	var scroll: int = int(Input.is_action_just_released("scroll_down")) - int(Input.is_action_just_released("scroll_up"))
+	target_size = min(max(target_size+scroll, MIN_CAM_SIZE), MAX_CAM_SIZE)
+	
+	if CAMERA.get_child(0).get_projection() == Camera3D.PROJECTION_ORTHOGONAL:
+		CAMERA.get_child(0).size = lerp(CAMERA.get_child(0).size, target_size, 0.1)
 	
 	CAMERA.rotation.y = lerp(CAMERA.rotation.y, target_rotation, 0.1)
+	CAMERA.rotation.x = lerp(CAMERA.rotation.x, target_pitch, 0.1)
 	
 	if Input.is_action_pressed("DEV"):
 		if Input.is_action_pressed("look_up") and Input.is_action_pressed("look_down"): reset_camera(false, true)
 		if Input.is_action_pressed("look_left") and Input.is_action_pressed("look_right"): reset_camera(true, false)
 		if Input.is_action_pressed("look_up") and Input.is_action_pressed("look_left"): reset_camera()
+
+
+func _input(event):
+	if event is InputEventMouseMotion and Input.is_action_pressed("move_cam"):
+		if abs(event.relative.x): 
+			var amount = -event.relative.x * get_process_delta_time()
+			target_rotation += amount
+			PLAYER.rotate_player(amount)
+			GUI.rotate_compass(amount)
+		if abs(event.relative.y): 
+			var input = target_pitch + -event.relative.y/abs(event.relative.y) * get_process_delta_time()
+			target_pitch = min(max(input, -MAX_PITCH), MAX_PITCH)
+
+
+func move_cam_with_buttons(delta):
+	var look_direction = Input.get_vector("look_left", "look_right", "look_up", "look_down")
+	if look_direction:
+		target_rotation += look_direction.x * delta  
+		if CAMERA.get_child(0).get_projection() == Camera3D.PROJECTION_ORTHOGONAL:
+			target_size = min(max(look_direction.y+target_size, MIN_CAM_SIZE), MAX_CAM_SIZE)
+		else: 
+			CAMERA.get_child(0).position.y += look_direction.y * delta * CAMERA.get_child(0).position.y
+			CAMERA.get_child(0).position.z += look_direction.y * delta * CAMERA.get_child(0).position.z
 
 
 func reset_camera(r: bool = true, s: bool = true):
@@ -205,8 +237,8 @@ func reset_camera(r: bool = true, s: bool = true):
 		else: CAMERA.get_child(0).position = Vector3(0,15.5,22.0)
 
 func recieve_orders(orders: Dictionary):
-	var COMMAND_ = func(options: Dictionary): 
-		if options.has(""): pass
+	#var COMMAND_ = func(options: Dictionary): 
+		#if options.has(""): pass
 		
 	var COMMAND_setfade = func(options: Dictionary):
 		var begin: float = FADE_SETTINGS.x

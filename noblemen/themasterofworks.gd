@@ -2,11 +2,33 @@ extends Thread
 ### WISHLIST ###
 # [x] change to cubic bezier <- this doent help. instead draw a vector from the endpoint to the midpoint, negate that, make that the vector to the next chunk's midpoint.
 # [x] trees
-# [ ] smarter generation 
-# - create world as one block
-# - using hightmap, go through and paint biomes
-# [ ] fix vertical gaps
+# [smarter generation] 
+#   L [ ] create world as one block
+#   L [ ] using hightmap, go through and paint biomes
+# [ ] fix vertical gaps (match min height of all adjacent tiles)
 
+
+### PLEASE NOTE: ### 
+# anything that comes prebuilt out the box will use Y-up. thats cringe.
+# anything i wrote uses Z-up. is this stupid, impractical, harder to read,
+# harder to maintain, more error prone and devoid of practical benefits?
+# yes.
+# i'm using Z-up anyway. i think its the gentlemans choice.
+
+# # # # # # # # # # # # #          # # # # # # # # # # # # #
+# + > X |       |       #          # + > X |       |       #
+# v     |       |       #          # v     |       |       #
+# Y     |       |       #          # Z     |       |       #
+# - - - + - - - + - - - #          # - - - + - - - + - - - #
+#       |       |       #          #       |       |       #
+#       |       |       #          #       |       |       #
+#       |       |       #          #       |       |       #
+# - - - + - - - + - - - #          # - - - + - - - + - - - #
+#       |       |       #          #       |       |       #
+#       |       |       #          #       |       |       #
+#       |       |       #          #       |       |       #
+# # # # # # # # # # # # #          # # # # # # # # # # # # #
+# MINE (based)                     GODOT's (cringe)
 const TILES = TheArchivist.TILE_NAMES
 var FOOL = TheFool
 var CHUNK_SIZE
@@ -250,33 +272,22 @@ func extend_curve(chunk_coords, curve_data, dir, path):
 	var mid_vector = curve_data[1]
 	var offset = chunk_coords * CHUNK_SIZE
 	var rand = FOOL.range_i(CHUNK_SIZE * 1/4, CHUNK_SIZE * 3/4)
-	var x1 
-	var y1 
-	var x2
-	var y2 
+	var x1: int
+	var y1: int
+	var x2: int
+	var y2: int
 	
 	if mid_vector == Vector2.ZERO:
 		x1 = FOOL.range_i(CHUNK_SIZE * 1/4.0, CHUNK_SIZE * 3/4.0) + offset.x
 		y1 = FOOL.range_i(CHUNK_SIZE * 1/4.0, CHUNK_SIZE * 3/4.0) + offset.y
 	else: 
-		var dist_from_edge = 16.0 # a DFE=4 would range from 1/4th - 3/4th of the chunks area as valid. DFE=10 -> 1/10th - 9/10th
 		var midpoint_dist = FOOL.range_f(CHUNK_SIZE/4, CHUNK_SIZE)
 		mid_vector = (mid_vector.normalized() * midpoint_dist) + block_coords
 		x1 = int(min(max(mid_vector.x, 0), CHUNK_SIZE*CHUNK_COUNT-1))
 		y1 = int(min(max(mid_vector.y, 0), CHUNK_SIZE*CHUNK_COUNT-1))
-		#x1 = int(min(max(mid_vector.x, offset.x+CHUNK_SIZE*1/dist_from_edge), offset.x+CHUNK_SIZE*(dist_from_edge-1)/dist_from_edge)) 
-		#y1 = int(min(max(mid_vector.y, offset.y+CHUNK_SIZE*1/dist_from_edge), offset.y+CHUNK_SIZE*(dist_from_edge-1)/dist_from_edge)) 
 	
 	x2 = ((abs(dir.x)*((1+dir.x)/2)*(CHUNK_SIZE-1)))+((1-abs(dir.x))*rand) + offset.x
 	y2 = ((abs(dir.y)*((1+dir.y)/2)*(CHUNK_SIZE-1)))+((1-abs(dir.y))*rand) + offset.y
-	
-	#var linear_max = 0.5
-	#var linear_iter = 0
-	#while  (block_coords-Vector2(x1,y1)).normalized().dot((Vector2(x1,y1)-Vector2(x2,y2)).normalized()) > linear_max:
-		#linear_iter += 1
-		#if FOOL.range_i(0,1): x1 += 1 if x1 != CHUNK_SIZE - 2 else -1
-		#else: y1 += 1 if y1 != CHUNK_SIZE - 2 else -1
-	#if linear_iter: print("iterations to correct ", chunk_coords, ": ", linear_iter)
 	
 	while abs(block_coords.x-x2) + abs(block_coords.y-y2) < CHUNK_SIZE/2:
 		rand = FOOL.range_i(0, CHUNK_SIZE - 1)
@@ -316,28 +327,28 @@ func generate_forest():
 				#else: set_tile(i,j,Z,"TREE_"+str(FOOL.range_i(0,1)),rot)
 
 
-func is_flat_and_centered(coords: Vector2, range: int) -> bool:
+func is_flat_and_centered(coords: Vector2, search_range: int) -> bool:
 	var height = heightmap[coords.x][coords.y]
 
 	if coords.x == 0 or coords.x == CHUNK_COUNT*CHUNK_SIZE-1 \
 	or coords.y == 0 or coords.y == CHUNK_COUNT*CHUNK_SIZE-1:
 		return false
 	
-	for i in range(coords.x - range, coords.x + range + 1):
-		for j in range(coords.y - range, coords.y + range + 1):
+	for i in range(coords.x - search_range, coords.x + search_range + 1):
+		for j in range(coords.y - search_range, coords.y + search_range + 1):
 			if heightmap[i][j] != height: return false
 	
 	return true
 
-func is_no_trees_nearby(coords: Vector2, range: int):
+func is_no_trees_nearby(coords: Vector2, search_range: int):
 	if coords.x == 0 or coords.x == CHUNK_COUNT*CHUNK_SIZE-1 \
 	or coords.y == 0 or coords.y == CHUNK_COUNT*CHUNK_SIZE-1:
 		return false
 	
 	var height = heightmap[coords.x][coords.y]
-	for i in range(coords.x - range, coords.x + range + 1):
-		for j in range(coords.y - range, coords.y + range + 1):
-			for k in range(height - range, height + range + 1):
+	for i in range(coords.x - search_range, coords.x + search_range + 1):
+		for j in range(coords.y - search_range, coords.y + search_range + 1):
+			for k in range(height - search_range, height + search_range + 1):
 				if MAP_GRID.get_cell_item(Vector3(i,k,j)) == TILES["TALL_PINE"]: return false
 	
 	return true

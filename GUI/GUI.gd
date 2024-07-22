@@ -15,12 +15,7 @@ enum {HOUR, MINUTE, PERIOD, DAY}
 
 @onready var compass_face = $compass/compass_progress as TextureRect
 var target_rotation: float = 0.0
-var lerp_speed = 2
-var past_diffs: Array[float] = []
-const MAX_DIFFS: int = 30
-var curr_diff = 0
-const OS_RATIO = 0.1
-# TODO: rework these parameters to be "lags x rads behind"
+var angular_velocity: float = 0.0
 
 var DUKE = TheDuke
 var ARCHIVIST = TheArchivist
@@ -28,12 +23,13 @@ var ARCHIVIST = TheArchivist
 
 
 func _ready():
-	DUKE.tick.connect(update_display) 
+	DUKE.tick.connect(update_time_display) 
 	DUKE.message_dispatch.connect(recieve_message)
 	DUKE.command_dispatch.connect(recieve_orders)
-	
-	for i in MAX_DIFFS*10: past_diffs.push_back(0.0)
 
+func _process(_delta): command_window()
+
+func _physics_process(delta): update_compass_display(delta)
 
 func recieve_message(message: Dictionary):
 	if message.has("error"): prepend_output_text(message)
@@ -44,10 +40,8 @@ func recieve_orders(orders: Dictionary):
 	elif orders.command_name == "help": COMMAND_help(orders.options)
 	elif orders.command_name == "clear": COMMAND_clear(orders.options)
 
-func _process(delta):command_window()
-func _physics_process(delta): move_compass(delta)
 
-func update_display(TIME: Vector4i):
+func update_time_display(TIME: Vector4i):
 	var hour = str(TIME[HOUR] if TIME[HOUR] else 12)  
 	var minute = str(TIME[MINUTE]).pad_zeros(2)
 	var period = "PM" if TIME[PERIOD] else "AM" 
@@ -59,17 +53,23 @@ func update_display(TIME: Vector4i):
 	clock_display.rotation_degrees = hour*(360/24) - minute*(15.0/60.0)
 
 
-func move_compass(delta):
-	var look_input_dir = Input.get_vector("look_left", "look_right", "look_up", "look_down")
-	if look_input_dir:
-		target_rotation += look_input_dir.x * delta
+func update_compass_display(delta):
+	var damping_factor = 0.99
+	var spring_strength: float = 10.0 
 	
-	compass_face.rotation = lerp(compass_face.rotation, target_rotation, lerp_speed*delta*OS_RATIO) 
 	var diff = target_rotation - compass_face.rotation
-	past_diffs[curr_diff] = diff
-	curr_diff = (curr_diff+1) % MAX_DIFFS
-	compass_face.rotation = lerp(compass_face.rotation, compass_face.rotation+past_diffs[curr_diff], lerp_speed*delta*(1-OS_RATIO)) 
+	var acceleration = spring_strength * diff
+	
+	angular_velocity += acceleration * delta
+	angular_velocity *= damping_factor
+	compass_face.rotation += angular_velocity * delta
+	
+	if abs(diff) < 0.001 and abs(angular_velocity) < 0.001:
+		rotation = target_rotation
+		angular_velocity = 0.0
 
+
+func rotate_compass(rot: float): target_rotation += rot
 
 func prepend_output_text(message): output.text = "- "+str(message)+"\n\n"+output.text
 
@@ -85,13 +85,7 @@ func command_window():
 		if Input.is_action_just_pressed("DEV_command") or Input.is_action_just_pressed("esc"):
 			command_zone.visible = false
 			DUKE.pause_game(false)
-			#
-			#var command = input_zone.text.strip_edges()
-			#DUKE.execute_command(command)
 		elif Input.is_action_just_pressed("submit"):
-			#command_zone.visible = false
-			#DUKE.pause_game(false)
-			
 			var command = input_zone.text.strip_edges()
 			DUKE.execute_command(command)
 
@@ -104,16 +98,16 @@ func COMMAND_help(options: Dictionary = {}):
 		commands_array.reverse()
 		
 		for command in commands_array:
-			var str = "= - "+command+" - = -\n| "+ ARCHIVIST.COMMANDS[command]["desc"]
+			var out_str = "= - "+command+" - = -\n| "+ ARCHIVIST.COMMANDS[command]["desc"]
 			if options.has("verbose") or options.has("v"):
-				str += "\n-- valid options --"
+				out_str += "\n-- valid options --"
 				for option in ARCHIVIST.COMMANDS[command]["accepted_options"]:
-					str += "\n| -" + option
-				str += "\n-- targets --"
+					out_str += "\n| -" + option
+				out_str += "\n-- targets --"
 				for target in ARCHIVIST.COMMANDS[command]["targets"]:
-					str += "\n| " + target
+					out_str += "\n| " + target
 				
-			prepend_output_text(str)
+			prepend_output_text(out_str)
 		
 		if options.has("verbose") or options.has("v"):
 			var info_str = "=- COMMAND -=-\n|- VALID\n|- OPTIONS"
@@ -123,13 +117,13 @@ func COMMAND_help(options: Dictionary = {}):
 			var command = options["command"][i]
 			if ARCHIVIST.COMMANDS.has(command):
 				var command_options = ARCHIVIST.COMMANDS[command]["accepted_options"]
-				var str = "= - "+command+" - = -\n| "+ ARCHIVIST.COMMANDS[command]["desc"]
-				str += "\n-- valid options --"
+				var out_str = "= - "+command+" - = -\n| "+ ARCHIVIST.COMMANDS[command]["desc"]
+				out_str += "\n-- valid options --"
 				for option in command_options:
-					str += "\n| -" + option + ": " + command_options[option]
-				prepend_output_text(str)
+					out_str += "\n| -" + option + ": " + command_options[option]
+				prepend_output_text(out_str)
 			else: prepend_output_text("=- "+command+" -=-\n|- doesn't exist")
 
-func COMMAND_clear(options: Dictionary): output.text = ""
+func COMMAND_clear(_options: Dictionary): output.text = ""
 
 
