@@ -8,7 +8,7 @@ enum time {HOUR, MINUTE, PERIOD, DAY}
 const POINTS_OF_INTEREST = {
 	"camp": {
 		"size": 7,  
-		"attempts": 10, 
+		"attempts": 30, 
 		"road_spacing": 0, 
 		"ground": "WOOD", 
 		"scene": "res://points_of_interest/camp/camp.tscn"

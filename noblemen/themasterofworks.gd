@@ -231,11 +231,11 @@ func draw_filled_circle(center_x: int, center_y: int, type: String = PATH_TILE, 
 			draw_line(center_x - int(x * clear_rad), center_x + int(x * clear_rad), center_y - int(y * clear_rad), "AIR", avg_height)
 			draw_line(center_x - int(y * clear_rad), center_x + int(y * clear_rad), center_y + int(x * clear_rad), "AIR", avg_height)
 			draw_line(center_x - int(y * clear_rad), center_x + int(y * clear_rad), center_y - int(x * clear_rad), "AIR", avg_height)
+		
 		draw_line(center_x - x, center_x + x, center_y + y, type, avg_height)
 		draw_line(center_x - x, center_x + x, center_y - y, type, avg_height)
 		draw_line(center_x - y, center_x + y, center_y + x, type, avg_height)
 		draw_line(center_x - y, center_x + y, center_y - x, type, avg_height)
-
 		y += 1
 		if error <= 0:
 			error += 2 * y + 1
@@ -251,8 +251,8 @@ func draw_line(x1, x2, y, type, ah):
 				if type != "AIR": set_tile(x, y, heightmap[x][y], type)
 				set_tile(x, y, heightmap[x][y]+1, "AIR", true)
 			else:
-				for i in range(1,x2-x1+2):
-					set_tile(x, y, ah+i, "AIR")
+				for i in range(ah+1,heightmap[x][y]+1):
+					set_tile(x, y, i, "AIR", true)
 				set_tile(x, y, ah, type)
 
 
@@ -260,11 +260,11 @@ func draw_line(x1, x2, y, type, ah):
 
 
 # function created with the help of claude AI, availible at claude.ai 
-func generate_noise_heightmap(width: int, height: int, max_height: int, noise_seed: int = FOOL.rand_i(), frequency: float = 0.005, lacunarity: float = 2.0, gain: float = 0.5) -> Array:
+func generate_noise_heightmap(width: int, height: int, max_height: int, noise_seed: int = FOOL.rand_i(), frequency: float = 0.001, lacunarity: float = 2.0, gain: float = 0.5) -> Array:
 	var noise = FastNoiseLite.new()
 	var offset = Vector2i(width,height)
 	noise.set_seed(noise_seed)
-	noise.set_noise_type(FastNoiseLite.TYPE_SIMPLEX) 
+	noise.set_noise_type(FastNoiseLite.TYPE_SIMPLEX_SMOOTH) 
 	noise.set_frequency(frequency)
 	noise.set_fractal_lacunarity(lacunarity)
 	noise.set_fractal_gain(gain)
@@ -300,6 +300,7 @@ func generate_chunks(height_map: Array = [], show_chunks: bool = SHOW_CHUNKS):
 ### POINTS OF INTEREST ### 
 func generate_POIs(locations: Dictionary):
 	for loc in locations:
+		print("placing ",loc)
 		var options = locations[loc]
 		
 		var size: int = 0 if not options.has("size") else options.size 
@@ -311,15 +312,22 @@ func generate_POIs(locations: Dictionary):
 		var scene: String = options.scene if options.has("scene") else "res://entities/bingus/bingus.glb"
 		
 		var coords = find_flat_spawn_location(size/WORLD_SCALE.x, attempts, poi_spacing, road_spacing)
-		if coords:
-			# this one abominable line will generate the ground disk out of the extant ground tile at that point
-			if not ground: for tile in TILES.keys(): if TILES[tile] == MAP_GRID.get_cell_item(Vector3(coords.x,heightmap[coords.x][coords.z],coords.z)): ground = tile; break
-			draw_filled_circle(coords.x, coords.z, ground, size/WORLD_SCALE.x, coords.y)
-			points_of_interest.push_back([loc,(coords + Vector3(0,1,0))*WORLD_SCALE,scene])
-		else:
-			#print("no suitable spawn spot for ", loc)
-			pass
 
+		if coords:
+			print("found suitable spot for ",loc, ". placing")
+			# this abominable one-liner will generate the ground disk out of the extant ground tile at that point
+			if not ground: 
+				for tile in TILES.keys(): 
+					if TILES[tile] == MAP_GRID.get_cell_item(Vector3(coords.x,heightmap[coords.x][coords.z],coords.z)): 
+						ground = tile
+						break
+			draw_filled_circle(coords.x, coords.z, ground, int(size/WORLD_SCALE.x), coords.y)
+			print(loc, " placed")
+			points_of_interest.push_back([loc,(coords + Vector3(0,1,0))*WORLD_SCALE,scene])
+
+		else:
+			print("no suitable spawn spot for ", loc)
+			pass
 
 
 
@@ -332,7 +340,7 @@ func generate_forest():
 			if not FOOL.range_i(0,TREE_ODDS):
 				var rot_i = [0, 16, 10, 22]
 				var rot = rot_i[FOOL.range_i(0, 3)]
-				if MAX_HEIGHT <= 60:
+				if MAX_HEIGHT <= 60 or true:
 					if is_flat_and_centered(Vector2(i,j), 1) and \
 					is_no_trees_nearby(Vector2(i,j), MIN_TREE_SPACING): set_tile(i,j,Z,"TALL_PINE",true,rot)
 				elif is_no_trees_nearby(Vector2(i,j), MIN_TREE_SPACING*2): set_tile(i,j,Z,"TALL_PINE",true,rot)

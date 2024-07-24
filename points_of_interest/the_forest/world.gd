@@ -29,7 +29,7 @@ const KILL_HEIGHT = -10
 ### WORLD GEN PARAMETERS ###
 const CHUNK_SIZE: int = 64
 const CHUNK_COUNT: int = 8
-const MAX_HEIGHT: int = 40
+const MAX_HEIGHT: int = 255
 const PATH_RADIUS: int = 3 #dist past the centerline on either side. path will be 2r+1 tiles wide
 const PATH_TILE: String = "PATH"
 const DEBUG_MODE: bool = false
@@ -47,7 +47,7 @@ var target_rotation: float = 0.0
 var target_pitch: float = 0.0
 var mouse_pos := Vector2.ZERO
 
-var FADE_SETTINGS := Vector3(5.0, 20.0, 0.25) # begin dist, end dist, and min alpha
+var FADE_SETTINGS := Vector3(5.0, 50.0, 0.1) # begin dist, end dist, and min alpha
 
 
 #### TIME/CARAVAN ###
@@ -142,8 +142,8 @@ func send_shipment():
 			active_wagons += 1
 			caravan.finished.connect(decrease_active_wagons)
 			path3d.add_child(caravan)
-			var caravan_length = caravan.length * 1.2
-			await get_tree().create_timer(caravan_length/CARAVAN_MPS).timeout
+			var spawn_spacing = caravan.get_spawn_spacing()
+			await get_tree().create_timer(spawn_spacing/CARAVAN_MPS).timeout
 
 
 func generate_map(r: bool = true, s: bool = true):
@@ -156,13 +156,14 @@ func generate_map(r: bool = true, s: bool = true):
 		WORLD.add_child(MAP_GRID)
 		
 		for poi in MASTER_OF_WORKS.get_points_of_interest():
-			#print("generating: ", poi[MASTER_OF_WORKS.NAME])
+			print("generating: ", poi[MASTER_OF_WORKS.NAME])
 			var scene = load(poi[MASTER_OF_WORKS.SCENE]).instantiate()
 			POINTS_OF_INTEREST.add_child(scene)
 			scene.position = poi[MASTER_OF_WORKS.COORDS]
 			scene.name = poi[MASTER_OF_WORKS.NAME]
 			scene.rotation.y = FOOL.range_f(0, 2*PI)
 			if poi[MASTER_OF_WORKS.NAME] == "camp": move_player(r,s, MASTER_OF_WORKS.get_world_scale(), poi[MASTER_OF_WORKS.COORDS])
+		print("map generation complete")
 	
 	MASTER_OF_WORKS = MasterOfWorks.new(CHUNK_SIZE, CHUNK_COUNT, MAX_HEIGHT, PATH_RADIUS, PATH_TILE, DEBUG_MODE)
 	MASTER_OF_WORKS.finished.connect(on_map_generation_finished)
