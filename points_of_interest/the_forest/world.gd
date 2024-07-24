@@ -28,8 +28,8 @@ const KILL_HEIGHT = -10
 
 ### WORLD GEN PARAMETERS ###
 const CHUNK_SIZE: int = 64
-const CHUNK_COUNT: int = 4
-const MAX_HEIGHT: int = 75
+const CHUNK_COUNT: int = 8
+const MAX_HEIGHT: int = 40
 const PATH_RADIUS: int = 3 #dist past the centerline on either side. path will be 2r+1 tiles wide
 const PATH_TILE: String = "PATH"
 const DEBUG_MODE: bool = false
@@ -42,7 +42,7 @@ const MIN_CAM_SIZE: float = 5
 const MAX_CAM_SIZE: float = 100
 var target_size: float = CAM_SIZE
 
-const MAX_PITCH: float = 2.5
+const MAX_PITCH: float = 2.5 #0.5
 var target_rotation: float = 0.0
 var target_pitch: float = 0.0
 var mouse_pos := Vector2.ZERO
@@ -156,7 +156,7 @@ func generate_map(r: bool = true, s: bool = true):
 		WORLD.add_child(MAP_GRID)
 		
 		for poi in MASTER_OF_WORKS.get_points_of_interest():
-			print("generating: ", poi[MASTER_OF_WORKS.NAME])
+			#print("generating: ", poi[MASTER_OF_WORKS.NAME])
 			var scene = load(poi[MASTER_OF_WORKS.SCENE]).instantiate()
 			POINTS_OF_INTEREST.add_child(scene)
 			scene.position = poi[MASTER_OF_WORKS.COORDS]

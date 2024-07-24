@@ -70,6 +70,7 @@ const POI_TO_GENERATE = TheArchivist.POINTS_OF_INTEREST
 # DEBUG
 var SHOW_CHUNKS: bool = false
 var SHOW_CURVE_HANDLES: bool = false
+const TIME_PROFILING: bool = true
 const HANDLE_HEIGHT: int = 2
 
 
@@ -112,20 +113,40 @@ func point_is_near_path(test_point: Vector2, search_range: float) -> bool:
 
 
 func generate_map():
-	#var start_time: float = Time.get_unix_time_from_system()
-	#print("beginning generation at")
+	var start_time: float = Time.get_unix_time_from_system()
+	var last_time: float = start_time
+	if TIME_PROFILING: 
+		print("beginning generation for ", CHUNK_COUNT, " chunk world.")
+		print("(",CHUNK_COUNT*CHUNK_SIZE,"x",CHUNK_COUNT*CHUNK_SIZE," tiles)")
+	
 	MAP_GRID.clear()
 	generate_chunks()
-	#print("chunks complete: ", snapped(Time.get_unix_time_from_system()-start_time, 0.00001))
-	#if not SHOW_CHUNKS: generate_forest()
+	
+	if TIME_PROFILING: 
+		print("chunks complete: ", snapped(Time.get_unix_time_from_system()-last_time, 0.00001))
+		last_time = Time.get_unix_time_from_system()
+	
+	if not SHOW_CHUNKS: 
+		generate_forest()
+		if TIME_PROFILING: 
+			print("forest complete: ", snapped(Time.get_unix_time_from_system()-last_time, 0.00001))
+			last_time = Time.get_unix_time_from_system()
+	
 	#generate_directed_curve("WATER")
 	generate_directed_curve(PATH_TILE)
-	#print("curve complete: ", snapped(Time.get_unix_time_from_system()-start_time, 0.00001))
+	
+	if TIME_PROFILING: 
+		print("curve(s) complete: ", snapped(Time.get_unix_time_from_system()-last_time, 0.00001))
+		last_time = Time.get_unix_time_from_system()
+	
 	generate_POIs(POI_TO_GENERATE)
-	#print("POIs complete: ", snapped(Time.get_unix_time_from_system()-start_time, 0.00001))
+	
+	if TIME_PROFILING: 
+		print("POIs complete: ", snapped(Time.get_unix_time_from_system()-last_time, 0.00001))
+	
 	finished.emit()
-	#print("total generation time: ", snapped(Time.get_unix_time_from_system()-start_time, 0.00001))
-
+	
+	if TIME_PROFILING: print("total generation time: ", snapped(Time.get_unix_time_from_system()-start_time, 0.00001))
 
 # i believe in Z-UP cry about it
 func set_tile(x, y, z, type, single: bool = false, rot = 0): 
@@ -138,6 +159,7 @@ func set_tile(x, y, z, type, single: bool = false, rot = 0):
 			for j in range(-1,2):
 				if point_is_on_grid(Vector2(x+i,y+j)): 
 					if heightmap[x+i][y+j] < min_z: min_z = heightmap[x+i][y+j]
+				else: min_z = 0
 		while z >= min_z:
 			MAP_GRID.set_cell_item(Vector3(x, z, y), tile, rot)
 			z -= 1
@@ -165,15 +187,29 @@ func set_path(x, y, type):
 	#height = floor((height/(abs(i_max-i_min)*abs(j_max-j_min)))+0.5)
 	
 	# -1..1 unless on the edge of a chunk. (assuming r=2)
-	for i in range(i_min, i_max):
-		for j in range(j_min, j_max):
-			if MAP_GRID.get_cell_item(Vector3(x+i, heightmap[x+i][y+j], y+j)) == TILES.WATER and type != "WATER":
-				set_tile(x+i, y+j, heightmap[x+i][y+j]+1, "WOOD")
-				set_tile(x+i, y+j, heightmap[x+i][y+j]+2, "AIR")
+	#for i in range(i_min, i_max):
+		#for j in range(j_min, j_max):
+			#if MAP_GRID.get_cell_item(Vector3(x+i, heightmap[x+i][y+j], y+j)) == TILES.WATER and type != "WATER":
+				#set_tile(x+i, y+j, heightmap[x+i][y+j]+1, "WOOD")
+				#set_tile(x+i, y+j, heightmap[x+i][y+j]+2, "AIR")
+			#else:
+				#set_tile(x+i, y+j, heightmap[x+i][y+j], type)
+				#set_tile(x+i, y+j, heightmap[x+i][y+j]+1,"AIR")
+
+
+	for i in range(i_min-PATH_RADIUS, i_max+PATH_RADIUS):
+		for j in range(j_min-PATH_RADIUS, j_max+PATH_RADIUS):
+			if i > i_min and i < i_max:
+				if MAP_GRID.get_cell_item(Vector3(x+i, heightmap[x+i][y+j], y+j)) == TILES.WATER and type != "WATER":
+					set_tile(x+i, y+j, heightmap[x+i][y+j]+1, "WOOD")
+					set_tile(x+i, y+j, heightmap[x+i][y+j]+2, "AIR")
+				else:
+					set_tile(x+i, y+j, heightmap[x+i][y+j], type)
+					set_tile(x+i, y+j, heightmap[x+i][y+j]+1,"AIR")
 			else:
-				set_tile(x+i, y+j, heightmap[x+i][y+j], type)
-				set_tile(x+i, y+j, heightmap[x+i][y+j]+1,"AIR")
-			
+				#if point_is_on_grid(Vector2(x+i, y+j)): set_tile(x+i, y+j, heightmap[x+i][y+j]+1,"AIR")
+				pass
+	
 			# for use with that height CRAP
 			#if MAX_HEIGHT <= 20:
 				#set_tile(x+i, y+j, height-1, type)
@@ -183,12 +219,18 @@ func set_path(x, y, type):
 				#set_tile(x+i, y+j, heightmap[x+i][y+j], type)
 				#set_tile(x+i, y+j, heightmap[x+i][y+j]+1,"AIR")
 
-func draw_filled_circle(center_x: int, center_y: int, type: String = PATH_TILE, radius: int = PATH_RADIUS, avg_height: int = -1):
+func draw_filled_circle(center_x: int, center_y: int, type: String = PATH_TILE, radius: int = PATH_RADIUS, avg_height: int = -1, clear_sides: bool = false):
 	var x = radius
 	var y = 0
 	var error = 1 - radius
 
 	while x >= y:
+		if clear_sides:
+			var clear_rad = 3
+			draw_line(center_x - int(x * clear_rad), center_x + int(x * clear_rad), center_y + int(y * clear_rad), "AIR", avg_height)
+			draw_line(center_x - int(x * clear_rad), center_x + int(x * clear_rad), center_y - int(y * clear_rad), "AIR", avg_height)
+			draw_line(center_x - int(y * clear_rad), center_x + int(y * clear_rad), center_y + int(x * clear_rad), "AIR", avg_height)
+			draw_line(center_x - int(y * clear_rad), center_x + int(y * clear_rad), center_y - int(x * clear_rad), "AIR", avg_height)
 		draw_line(center_x - x, center_x + x, center_y + y, type, avg_height)
 		draw_line(center_x - x, center_x + x, center_y - y, type, avg_height)
 		draw_line(center_x - y, center_x + y, center_y + x, type, avg_height)
@@ -203,10 +245,10 @@ func draw_filled_circle(center_x: int, center_y: int, type: String = PATH_TILE, 
 
 # TODO: make the tiles on the edge fill under themselves
 func draw_line(x1, x2, y, type, ah):
-	for x in range(x1, x2 + 2):
+	for x in range(x1, x2 + 1):
 		if point_is_on_grid(Vector2(x,y)): 
 			if ah == -1: 
-				set_tile(x, y, heightmap[x][y], type)
+				if type != "AIR": set_tile(x, y, heightmap[x][y], type)
 				set_tile(x, y, heightmap[x][y]+1, "AIR", true)
 			else:
 				for i in range(1,x2-x1+2):
@@ -252,12 +294,7 @@ func generate_chunks(height_map: Array = [], show_chunks: bool = SHOW_CHUNKS):
 							"GRASS" if hm[i][j] > MAX_HEIGHT/2 else \
 							"GRASS" if hm[i][j] > MAX_HEIGHT/4 else \
 							"WOOD"
-				
-				if i == 0 or j == 0 or i == hm.size()-1 or j == hm[i].size()-1: 
-					set_column(i,j,hm[i][j],type)
-				else:
-					set_tile(i,j,hm[i][j],type)
-					set_tile(i,j,hm[i][j]-1,type)
+				set_tile(i,j,hm[i][j],type)
 
 
 ### POINTS OF INTEREST ### 
@@ -280,7 +317,8 @@ func generate_POIs(locations: Dictionary):
 			draw_filled_circle(coords.x, coords.z, ground, size/WORLD_SCALE.x, coords.y)
 			points_of_interest.push_back([loc,(coords + Vector3(0,1,0))*WORLD_SCALE,scene])
 		else:
-			print("no suitable spawn spot for ", loc)
+			#print("no suitable spawn spot for ", loc)
+			pass
 
 
 
@@ -294,9 +332,10 @@ func generate_forest():
 			if not FOOL.range_i(0,TREE_ODDS):
 				var rot_i = [0, 16, 10, 22]
 				var rot = rot_i[FOOL.range_i(0, 3)]
-				if is_flat_and_centered(Vector2(i,j), 1) and \
-				is_no_trees_nearby(Vector2(i,j), MIN_TREE_SPACING): set_tile(i,j,Z,"TALL_PINE",true,rot)
-
+				if MAX_HEIGHT <= 60:
+					if is_flat_and_centered(Vector2(i,j), 1) and \
+					is_no_trees_nearby(Vector2(i,j), MIN_TREE_SPACING): set_tile(i,j,Z,"TALL_PINE",true,rot)
+				elif is_no_trees_nearby(Vector2(i,j), MIN_TREE_SPACING*2): set_tile(i,j,Z,"TALL_PINE",true,rot)
 
 func is_flat_and_centered(coords: Vector2, search_range: int) -> bool:
 	var height = heightmap[coords.x][coords.y]
@@ -513,7 +552,7 @@ func plotLine(x0, y0, x1, y1, tile):
 	var e2
 	
 	while true:
-		draw_filled_circle(x0 as int, y0 as int, tile)
+		draw_filled_circle(x0, y0, tile, PATH_RADIUS, -1, true)
 		e2 = 2*err
 		
 		if e2 >= dy:
@@ -570,7 +609,7 @@ func plotQuadBezierSeg(x0, y0, x1, y1, x2, y2, tile):
 		yy += yy
 		err = dx+dy+xy
 		
-		draw_filled_circle(x0 as int, y0 as int, tile)
+		draw_filled_circle(x0, y0, tile, PATH_RADIUS, -1, true)
 		if x0 == x2 and y0 == y2: return true
 		y1 = 2*err < dx
 		if 2*err > dy:
@@ -584,7 +623,7 @@ func plotQuadBezierSeg(x0, y0, x1, y1, x2, y2, tile):
 			dx += xx
 			err += dx
 		while dy < 0 and dx > 0:
-			draw_filled_circle(x0 as int, y0 as int, tile)
+			draw_filled_circle(x0, y0, tile, PATH_RADIUS, -1, true)
 			if x0 == x2 and y0 == y2: return true
 			y1 = 2*err < dx
 			if 2*err > dy:
