@@ -2,20 +2,17 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d0r4p4ksdjor5"
-path.s3tc="res://.godot/imported/fire_fire.png-7567a48b64be269cdd6184539b193bbb.s3tc.ctex"
+uid="uid://cpov8txxa0viu"
+path.s3tc="res://.godot/imported/fire_active.png-dd74325fa65ac70a6c8de7cadc66bcd3.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
-generator_parameters={
-"md5": "d4b7c449fb4c394e5ea9d491d56bcda3"
-}
 
 [deps]
 
-source_file="res://points_of_interest/camp/fire_fire.png"
-dest_files=["res://.godot/imported/fire_fire.png-7567a48b64be269cdd6184539b193bbb.s3tc.ctex"]
+source_file="res://points_of_interest/camp/fire_active.png"
+dest_files=["res://.godot/imported/fire_active.png-dd74325fa65ac70a6c8de7cadc66bcd3.s3tc.ctex"]
 
 [params]
 

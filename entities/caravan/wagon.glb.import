@@ -4,12 +4,12 @@ importer="scene"
 importer_version=1
 type="PackedScene"
 uid="uid://dbjjw7nxppivt"
-path="res://.godot/imported/caravan.glb-5b123dae253e9d1d8a0a2e48788a51ab.scn"
+path="res://.godot/imported/wagon.glb-b25d2a6fc299a3d318b953d32ef6a83d.scn"
 
 [deps]
 
-source_file="res://entities/caravan/caravan.glb"
-dest_files=["res://.godot/imported/caravan.glb-5b123dae253e9d1d8a0a2e48788a51ab.scn"]
+source_file="res://entities/caravan/wagon.glb"
+dest_files=["res://.godot/imported/wagon.glb-b25d2a6fc299a3d318b953d32ef6a83d.scn"]
 
 [params]
 

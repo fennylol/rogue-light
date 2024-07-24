@@ -20,14 +20,16 @@ var Caravan = preload("res://entities/caravan/caravan.gd")
 @onready var CAMERA = $camera_man as Node3D
 @onready var GUI = $Gui as Control
 @onready var WORLD = $world_parts as Node3D
-@onready var MAP_GRID = $world_parts/GridMap as GridMap
 @onready var HEAVENLY_BODIES = $world_parts/lights/heavenly_bodies as Node3D
 @onready var STATIC_LIGHTS = $world_parts/lights/static_lights as Node3D
+@onready var POINTS_OF_INTEREST = $world_parts/points_of_interest as Node3D
+@onready var MAP_GRID = $world_parts/GridMap as GridMap
+const KILL_HEIGHT = -10
 
 ### WORLD GEN PARAMETERS ###
 const CHUNK_SIZE: int = 64
 const CHUNK_COUNT: int = 4
-const MAX_HEIGHT: int = 40
+const MAX_HEIGHT: int = 75
 const PATH_RADIUS: int = 3 #dist past the centerline on either side. path will be 2r+1 tiles wide
 const PATH_TILE: String = "PATH"
 const DEBUG_MODE: bool = false
@@ -40,7 +42,7 @@ const MIN_CAM_SIZE: float = 5
 const MAX_CAM_SIZE: float = 100
 var target_size: float = CAM_SIZE
 
-const MAX_PITCH: float = 0.5
+const MAX_PITCH: float = 2.5
 var target_rotation: float = 0.0
 var target_pitch: float = 0.0
 var mouse_pos := Vector2.ZERO
@@ -53,7 +55,7 @@ enum {AM, PM}
 enum {HOUR, MINUTE, PERIOD, DAY}
 const SCHEDULE_LENGTH: int = 14
 const CARAVAN_MPS: float = 4 #meters/sec
-const MAX_CARAVAN_SIZE = 5
+const MAX_CARAVAN_SIZE = 3
 var SHIPPING_SCHEDULE := Vector4i(13,14,0,0)
 var active_wagons = 0
 
@@ -66,6 +68,8 @@ func _ready():
 func _process(delta):
 	move_camera(delta)
 	if DUKE.PAUSED: return
+	if PLAYER.position.y <= KILL_HEIGHT: move_player(false,false, MASTER_OF_WORKS.get_world_scale())
+	
 	var fade_material: Material = MAP_GRID.mesh_library.get_item_mesh(ARCHIVIST.TILE_NAMES["TALL_PINE"]).surface_get_material(0)
 	if fade_material is ShaderMaterial:
 		fade_material.set_shader_parameter("player_position", PLAYER.global_transform.origin)
@@ -115,6 +119,8 @@ func process_world_tick(TIME: Vector4i):
 func send_shipment():
 	# TODO CONNECT CARAVAN FINISHED SIGNAL TO DESTROY THE PATH
 	var path = MASTER_OF_WORKS.get_road_path()
+	var hm = MASTER_OF_WORKS.get_heightmap()
+	var ws = MASTER_OF_WORKS.get_world_scale()
 	var path3d = Path3D.new()
 	path3d.name = "road_path"
 	path3d.set_curve(Curve3D.new())
@@ -131,7 +137,7 @@ func send_shipment():
 	for i in TheFool.range_i(1,MAX_CARAVAN_SIZE):
 		if WORLD.get_node("road_path"):
 			var decrease_active_wagons = func(): active_wagons -= 1; if active_wagons == 0: WORLD.remove_child(path3d)
-			var caravan = Caravan.init(path3d.curve.get_baked_length()/CARAVAN_MPS) as PathFollow3D
+			var caravan = Caravan.init(hm, ws, path3d.curve.get_baked_length()/CARAVAN_MPS) as PathFollow3D
 			caravan.name = "caravan_"+str(i)
 			active_wagons += 1
 			caravan.finished.connect(decrease_active_wagons)
@@ -142,22 +148,34 @@ func send_shipment():
 
 func generate_map(r: bool = true, s: bool = true):
 	if WORLD.get_node_or_null("road_path"): WORLD.get_node("road_path").queue_free()
-	var on_map_generation_finished = func():
+	var on_map_generation_finished = func():	
+		move_player(r,s, MASTER_OF_WORKS.get_world_scale())
 		MAP_GRID.queue_free()
+		for i in POINTS_OF_INTEREST.get_child_count(): POINTS_OF_INTEREST.get_child(i).queue_free()
 		MAP_GRID = MASTER_OF_WORKS.get_map_grid()
 		WORLD.add_child(MAP_GRID)
+		
+		for poi in MASTER_OF_WORKS.get_points_of_interest():
+			print("generating: ", poi[MASTER_OF_WORKS.NAME])
+			var scene = load(poi[MASTER_OF_WORKS.SCENE]).instantiate()
+			POINTS_OF_INTEREST.add_child(scene)
+			scene.position = poi[MASTER_OF_WORKS.COORDS]
+			scene.name = poi[MASTER_OF_WORKS.NAME]
+			scene.rotation.y = FOOL.range_f(0, 2*PI)
+			if poi[MASTER_OF_WORKS.NAME] == "camp": move_player(r,s, MASTER_OF_WORKS.get_world_scale(), poi[MASTER_OF_WORKS.COORDS])
 	
 	MASTER_OF_WORKS = MasterOfWorks.new(CHUNK_SIZE, CHUNK_COUNT, MAX_HEIGHT, PATH_RADIUS, PATH_TILE, DEBUG_MODE)
 	MASTER_OF_WORKS.finished.connect(on_map_generation_finished)
 	MASTER_OF_WORKS.generate_map()
-	center_player(r,s, MASTER_OF_WORKS.get_world_scale())
 
 
 
-func center_player(r: bool = true, s: bool = true, world_scale := Vector3(1,1,1)):
-	var midpoint = Vector2(CHUNK_COUNT*CHUNK_SIZE*world_scale.x, CHUNK_COUNT*CHUNK_SIZE*world_scale.z)/2.0
-	var height = ceil(MASTER_OF_WORKS.get_heightmap()[midpoint.x][midpoint.y]*world_scale.y)
-	PLAYER.position = Vector3(midpoint.x, height+1, midpoint.y)
+func move_player(r: bool = true, s: bool = true, world_scale := Vector3(1,1,1), set_pos := Vector3.ZERO):
+	if set_pos: PLAYER.position = set_pos + Vector3(0,1,0)
+	else:
+		var midpoint = Vector2(CHUNK_COUNT*CHUNK_SIZE*world_scale.x, CHUNK_COUNT*CHUNK_SIZE*world_scale.z)/2.0
+		var height = ceil(MASTER_OF_WORKS.get_heightmap()[midpoint.x][midpoint.y]*world_scale.y)
+		PLAYER.position = Vector3(midpoint.x, height+1, midpoint.y)
 	reset_camera(r, s)
 
 
@@ -187,7 +205,7 @@ func move_camera(delta):
 		#if pos.y + 1 >= get_viewport().size.y: Input.warp_mouse(Vector2(pos.x,1))
 		#elif pos.y <= 0: Input.warp_mouse(Vector2(pos.x,get_viewport().size.y-1))
 	
-	var scroll: int = int(Input.is_action_just_released("scroll_down")) - int(Input.is_action_just_released("scroll_up"))
+	var scroll: int = 2*int(Input.is_action_just_released("scroll_down")) - int(Input.is_action_just_released("scroll_up"))
 	target_size = min(max(target_size+scroll, MIN_CAM_SIZE), MAX_CAM_SIZE)
 	
 	if CAMERA.get_child(0).get_projection() == Camera3D.PROJECTION_ORTHOGONAL:

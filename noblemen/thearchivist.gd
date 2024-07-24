@@ -5,6 +5,55 @@ enum TILE_NAMES {GRASS, STONE, WOOD, PATH, WATER, SNOW, TALL_PINE, WHITE, BLACK,
 enum period {AM, PM}
 enum time {HOUR, MINUTE, PERIOD, DAY}
 
+const POINTS_OF_INTEREST = {
+	"camp": {
+		"size": 7,  
+		"attempts": 10, 
+		"road_spacing": 0, 
+		"ground": "WOOD", 
+		"scene": "res://points_of_interest/camp/camp.tscn"
+	},
+	
+	"tent": {
+		"size": 3,  
+		"attempts": 10, 
+		"POI_spacing": 20,
+		"ground": "SNOW", 
+		"scene": "res://points_of_interest/camp/tent.glb"
+	},
+	
+	"stalled_caravan": {
+		"size": 10,
+		"attempts": 1,
+		"POI_spacing": 50,
+		"road_spacing": 10,
+		"scene": "res://entities/caravan/horts_and_wagon.tscn"
+	},
+	
+	"the_sacred_one": {
+		"attempts": 1,
+		"road_spacing": 100, 
+		"POI_spacing": 100
+	}
+}
+
+const SAMPLE_POI = {
+"": {
+		"size": 0,
+		"attempts": 0,
+		"road_spacing": 0, 
+		"POI_spacing": 0,
+		"scene": "res://"
+	}
+
+	# size: the radius of the ground disk,
+	# attempts: how many points to test for. high,
+	# road_spacing: min dist from the road. if 0, will default to chunk_size. if not present, will use ground_disk size. 
+	# POI_spacing: min_dist from other POIs.
+	# scene: "res://"
+	#}
+}
+
 
 const COMMANDS = {
 	"run": {
@@ -96,7 +145,7 @@ const COMMANDS = {
 			"f": "FLAG - f"
 		},
 		"desc": "camera",
-		"targets": ["world.gd", "bandit.gd"]
+		"targets": ["world.gd"]
 	}
 }
 

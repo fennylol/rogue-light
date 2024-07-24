@@ -6,6 +6,10 @@ extends Thread
 #   L [ ] create world as one block
 #   L [ ] using hightmap, go through and paint biomes
 # [ ] fix vertical gaps (match min height of all adjacent tiles)
+# [ ] regularize Y-up/Z-up (make it clearing when each is what.) 
+# [ ] tunr x/y into vector inputs. 
+# [ ] make world scaling more consistent and regular lol
+# [ ] why does the path thing still leave gaps?!
 
 
 ### PLEASE NOTE: ### 
@@ -29,17 +33,18 @@ extends Thread
 #       |       |       #          #       |       |       #
 # # # # # # # # # # # # #          # # # # # # # # # # # # #
 # MINE (based)                     GODOT's (cringe)
+
+
 const TILES = TheArchivist.TILE_NAMES
 var FOOL = TheFool
-var CHUNK_SIZE
-var CHUNK_COUNT
-var MAX_HEIGHT
-var PATH_RADIUS
-var PATH_TILE
+signal finished
 
-### CONST SETTINGS ###
-const TREE_ODDS = 10
-const MIN_TREE_SPACING = 5
+# WORLD 
+var CHUNK_SIZE: int
+var CHUNK_COUNT: int
+var MAX_HEIGHT: int
+var heightmap: Array
+var MAP_GRID = GridMap.new()
 #const WORLD_SCALE = Vector3(1,1,1)
 #const MESH_LIB = preload("res://points_of_interest/the_forest/1m_tiles.tres")
 #const WORLD_SCALE = Vector3(1,.5,1)
@@ -47,18 +52,28 @@ const MIN_TREE_SPACING = 5
 const WORLD_SCALE = Vector3(.5,.25,.5)
 const MESH_LIB = preload("res://points_of_interest/the_forest/halfm_tiles.tres")
 
-signal finished
-var heightmap = []
-var road_path: Array = []
-var MAP_GRID = GridMap.new()
-var mutex = Mutex.new()
+# ROAD
+var PATH_RADIUS: int
+var PATH_TILE: String
+var road_path: Array 
 
-# debug settings
-var SHOW_CHUNKS = false
-var SHOW_CURVE_HANDLES = false
-const HANDLE_HEIGHT = 2
+# FOREST
+const TREE_ODDS: int = 10
+const MIN_TREE_SPACING: int = 5
 
-func _init(cs: int = 16, cc: int = 16, mh: int = 10, pr: int = 2, pt: String = "STONE", dm: bool = false):
+# POINTS OF INTEREST
+enum {NAME, COORDS, SCENE}
+var points_of_interest: Array 
+const POI_TO_GENERATE = TheArchivist.POINTS_OF_INTEREST 
+
+
+# DEBUG
+var SHOW_CHUNKS: bool = false
+var SHOW_CURVE_HANDLES: bool = false
+const HANDLE_HEIGHT: int = 2
+
+
+func _init(cs: int = 16, cc: int = 16, mh: int = 40, pr: int = 3, pt: String = "PATH", dm: bool = false):
 	CHUNK_COUNT = cc
 	CHUNK_SIZE = cs
 	MAX_HEIGHT = mh * int(not dm)
@@ -74,37 +89,63 @@ func get_heightmap(): return heightmap
 func get_map_grid(): return MAP_GRID
 func get_road_path(): return road_path
 func get_world_scale(): return WORLD_SCALE
+func get_points_of_interest(): return points_of_interest
 
-func stop_thread():
-	wait_to_finish()
-	free()
+func point_is_on_grid(coords: Vector2) -> bool: 
+	return coords.x >= 0 and coords.x < CHUNK_SIZE*CHUNK_COUNT and coords.y >= 0 and coords.y < CHUNK_SIZE*CHUNK_COUNT
+
+func point_is_near_POI(coords: Vector3, search_range: int) -> bool: 
+	if search_range == 0: return false
+	for poi in points_of_interest: 
+		if abs((coords - poi[COORDS]/WORLD_SCALE).length()) < search_range: return true
+	return false
+
+func point_is_near_path(test_point: Vector2, search_range: float) -> bool:
+	if search_range == 0: return false
+	for chunk in road_path:
+		for point in chunk:
+			point /= WORLD_SCALE
+			if test_point.distance_to(Vector2(point.x, point.z)) <= search_range:
+				return true
+	return false
+
+
 
 func generate_map():
+	#var start_time: float = Time.get_unix_time_from_system()
+	#print("beginning generation at")
 	MAP_GRID.clear()
 	generate_chunks()
-	if not SHOW_CHUNKS: generate_forest()
+	#print("chunks complete: ", snapped(Time.get_unix_time_from_system()-start_time, 0.00001))
+	#if not SHOW_CHUNKS: generate_forest()
 	#generate_directed_curve("WATER")
 	generate_directed_curve(PATH_TILE)
+	#print("curve complete: ", snapped(Time.get_unix_time_from_system()-start_time, 0.00001))
+	generate_POIs(POI_TO_GENERATE)
+	#print("POIs complete: ", snapped(Time.get_unix_time_from_system()-start_time, 0.00001))
 	finished.emit()
+	#print("total generation time: ", snapped(Time.get_unix_time_from_system()-start_time, 0.00001))
 
 
 # i believe in Z-UP cry about it
-func set_tile(x, y, z, type, rot = 0): 
-	mutex.lock()
-	MAP_GRID.set_cell_item(Vector3(x, z, y), TILES[type], rot)
-	mutex.unlock()
+func set_tile(x, y, z, type, single: bool = false, rot = 0): 
+	var tile: int = TILES[type] if typeof(type) == TYPE_STRING else type
+	
+	if single: MAP_GRID.set_cell_item(Vector3(x, z, y), tile, rot)
+	else: 
+		var min_z = z
+		for i in range(-1,2):
+			for j in range(-1,2):
+				if point_is_on_grid(Vector2(x+i,y+j)): 
+					if heightmap[x+i][y+j] < min_z: min_z = heightmap[x+i][y+j]
+		while z >= min_z:
+			MAP_GRID.set_cell_item(Vector3(x, z, y), tile, rot)
+			z -= 1
 
-func set_top_tile(x, y, type): 
-	var i = 0
-	while ((MAP_GRID.get_cell_item(Vector3i(x,i,y)) == -1 \
-			or MAP_GRID.get_cell_item(Vector3i(x,i+1,y)) != -1) \
-			and i <= MAX_HEIGHT): i+=1
-	#MAP_GRID.set_cell_item(Vector3(x, i, y), WORLD_TILE_LIST.TILE_NAMES[type], 0)
-	set_tile(x, y, i, type)
 
 func set_column(x, y, z, type): 
 	var i = 0
-	while i != z+1:
+	while i <= z:
 		MAP_GRID.set_cell_item(Vector3(x, i, y), TILES[type], 0)
 		i += 1
 
@@ -141,6 +182,40 @@ func set_path(x, y, type):
 			#else:
 				#set_tile(x+i, y+j, heightmap[x+i][y+j], type)
 				#set_tile(x+i, y+j, heightmap[x+i][y+j]+1,"AIR")
+
+func draw_filled_circle(center_x: int, center_y: int, type: String = PATH_TILE, radius: int = PATH_RADIUS, avg_height: int = -1):
+	var x = radius
+	var y = 0
+	var error = 1 - radius
+
+	while x >= y:
+		draw_line(center_x - x, center_x + x, center_y + y, type, avg_height)
+		draw_line(center_x - x, center_x + x, center_y - y, type, avg_height)
+		draw_line(center_x - y, center_x + y, center_y + x, type, avg_height)
+		draw_line(center_x - y, center_x + y, center_y - x, type, avg_height)
+
+		y += 1
+		if error <= 0:
+			error += 2 * y + 1
+		else:
+			x -= 1
+			error += 2 * (y - x) + 1
+
+# TODO: make the tiles on the edge fill under themselves
+func draw_line(x1, x2, y, type, ah):
+	for x in range(x1, x2 + 2):
+		if point_is_on_grid(Vector2(x,y)): 
+			if ah == -1: 
+				set_tile(x, y, heightmap[x][y], type)
+				set_tile(x, y, heightmap[x][y]+1, "AIR", true)
+			else:
+				for i in range(1,x2-x1+2):
+					set_tile(x, y, ah+i, "AIR")
+				set_tile(x, y, ah, type)
+
+
+
+
 
 # function created with the help of claude AI, availible at claude.ai 
 func generate_noise_heightmap(width: int, height: int, max_height: int, noise_seed: int = FOOL.rand_i(), frequency: float = 0.005, lacunarity: float = 2.0, gain: float = 0.5) -> Array:
@@ -185,7 +260,121 @@ func generate_chunks(height_map: Array = [], show_chunks: bool = SHOW_CHUNKS):
 					set_tile(i,j,hm[i][j]-1,type)
 
 
+### POINTS OF INTEREST ### 
+func generate_POIs(locations: Dictionary):
+	for loc in locations:
+		var options = locations[loc]
+		
+		var size: int = 0 if not options.has("size") else options.size 
+		var attempts: int = 1 if not options.has("attempts") else options.attempts 
+		var ground: String = "" if not options.has("ground") else options.ground 
+		# my second goat of an EQ
+		var road_spacing: float = size+1 if not options.has("road_spacing") else max(floor(1-absf(options.road_spacing)),0)*sqrt(2*(CHUNK_SIZE**2))+options.road_spacing
+		var poi_spacing: float = size+1 if not options.has("POI_spacing") else options.POI_spacing 
+		var scene: String = options.scene if options.has("scene") else "res://entities/bingus/bingus.glb"
+		
+		var coords = find_flat_spawn_location(size/WORLD_SCALE.x, attempts, poi_spacing, road_spacing)
+		if coords:
+			# this one abominable line will generate the ground disk out of the extant ground tile at that point
+			if not ground: for tile in TILES.keys(): if TILES[tile] == MAP_GRID.get_cell_item(Vector3(coords.x,heightmap[coords.x][coords.z],coords.z)): ground = tile; break
+			draw_filled_circle(coords.x, coords.z, ground, size/WORLD_SCALE.x, coords.y)
+			points_of_interest.push_back([loc,(coords + Vector3(0,1,0))*WORLD_SCALE,scene])
+		else:
+			print("no suitable spawn spot for ", loc)
 
+
+
+
+### FOREST STUFF ### 
+func generate_forest(): 
+	#load("res://RAW_RESOURCES/helpers.gd").add_mesh_to_library_shaded("res://world/map/1m_tiles.tres", "res://world/map/trees/tall_pine.obj", "tall_pine")
+	for i in heightmap.size():
+		for j in heightmap[i].size():
+			var Z = heightmap[i][j]+1
+			if not FOOL.range_i(0,TREE_ODDS):
+				var rot_i = [0, 16, 10, 22]
+				var rot = rot_i[FOOL.range_i(0, 3)]
+				if is_flat_and_centered(Vector2(i,j), 1) and \
+				is_no_trees_nearby(Vector2(i,j), MIN_TREE_SPACING): set_tile(i,j,Z,"TALL_PINE",true,rot)
+
+
+func is_flat_and_centered(coords: Vector2, search_range: int) -> bool:
+	var height = heightmap[coords.x][coords.y]
+
+	if coords.x == 0 or coords.x == CHUNK_COUNT*CHUNK_SIZE-1 \
+	or coords.y == 0 or coords.y == CHUNK_COUNT*CHUNK_SIZE-1:
+		return false
+	
+	for i in range(coords.x - search_range, coords.x + search_range + 1):
+		for j in range(coords.y - search_range, coords.y + search_range + 1):
+			if heightmap[i][j] != height: return false
+	
+	return true
+
+# TODO: replace with find_flat_spawwn_location
+func is_no_trees_nearby(coords: Vector2, search_range: int):
+	if coords.x == 0 or coords.x == CHUNK_COUNT*CHUNK_SIZE-1 \
+	or coords.y == 0 or coords.y == CHUNK_COUNT*CHUNK_SIZE-1:
+		return false
+	
+	var height = heightmap[coords.x][coords.y]
+	for i in range(coords.x - search_range, coords.x + search_range + 1):
+		for j in range(coords.y - search_range, coords.y + search_range + 1):
+			for k in range(height - search_range, height + search_range + 1):
+				if MAP_GRID.get_cell_item(Vector3(i,k,j)) == TILES["TALL_PINE"]: return false
+	
+	return true
+
+func find_flat_spawn_location(size: int, spawn_attempts: int, poi_spacing: float, road_spacing:float) -> Vector3:
+	var sort_by_size_then_flatness = func (a, b): 
+		if a[1][2] == b[1][2]: return a[1][1] < b[1][1]
+		else: return a[1][2] > b[1][2]
+	
+	var convert_to_vec3 = func (sub): return Vector3(sub[0].x, sub[1][0], sub[0].y)
+	var valid_points: Array
+	
+	for i in spawn_attempts:
+		var spawn_point := Vector2(FOOL.range_i(0, CHUNK_SIZE*CHUNK_COUNT-1),FOOL.range_i(0, CHUNK_SIZE*CHUNK_COUNT-1))
+		if not point_is_near_path(spawn_point, road_spacing): valid_points.push_back([spawn_point, height_avg_and_dev(spawn_point,size)])
+																					#[Vector2,     [height, dev, counted_tiles]]
+	
+	if not valid_points.size(): return Vector3.ZERO
+	
+	valid_points.sort_custom(sort_by_size_then_flatness)
+	valid_points = valid_points.map(convert_to_vec3)
+
+	while valid_points.size() > 0 and point_is_near_POI(valid_points[0], poi_spacing):
+		set_tile(valid_points[0].x,valid_points[0].z+5,valid_points[0].y, "WHITE")
+		valid_points.pop_front()
+	
+	return valid_points[0] if valid_points.size() else Vector3.ZERO
+
+func height_avg_and_dev(coords: Vector2, search_range: int):
+	var height = 0.0
+	var dev = 0.0
+	var counted_tiles = 0
+	
+	for i in range(-search_range, search_range+1):
+		for j in range(-search_range, search_range+1):
+			if point_is_on_grid(Vector2(coords.x+i,coords.y+j)): 
+				height += heightmap[coords.x+i][coords.y+j]
+				counted_tiles += 1
+	height = floor((height/counted_tiles)+0.5)
+	
+	for i in range(-search_range, search_range+1):
+		for j in range(-search_range, search_range+1):
+			if point_is_on_grid(Vector2(coords.x+i,coords.y+j)): 
+				dev += absf(heightmap[coords.x+i][coords.y+j] - height)
+	dev /= counted_tiles
+	
+	return [height,dev,counted_tiles]
+
+
+
+
+
+### ROAD GENERATION ###
+# determines the start/ending points of the curve and what chunks it will go through
 func generate_directed_curve(tile):
 	road_path = []
 	# determine block, edge and chunk indices for start/end points
@@ -263,10 +452,7 @@ func generate_directed_curve(tile):
 	extend_curve(org_chunk_coords, next_curve_data, dir, tile)
 
 
-
-
-
-### PLOT CURVE AGAINST TILE GRID ###
+# create a curve within a chunk
 func extend_curve(chunk_coords, curve_data, dir, path):
 	var block_coords = curve_data[0]
 	var mid_vector = curve_data[1]
@@ -297,9 +483,12 @@ func extend_curve(chunk_coords, curve_data, dir, path):
 	
 	plotQuadBezier(block_coords.x, block_coords.y, x1, y1, x2, y2, path)
 	
-	var start_point = Vector3(block_coords.x,heightmap[block_coords.x][block_coords.y],block_coords.y) * WORLD_SCALE
-	var mid_point = Vector3(x1,heightmap[x1][y1],y1) * WORLD_SCALE
-	var end_point = Vector3(x2,heightmap[x2][y2],y2) * WORLD_SCALE
+	#var start_point = Vector3(block_coords.x,heightmap[block_coords.x][block_coords.y],block_coords.y) * WORLD_SCALE
+	#var mid_point = Vector3(x1,heightmap[x1][y1],y1) * WORLD_SCALE
+	#var end_point = Vector3(x2,heightmap[x2][y2],y2) * WORLD_SCALE
+	var start_point = Vector3(block_coords.x,0,block_coords.y) * WORLD_SCALE
+	var mid_point = Vector3(x1,0,y1) * WORLD_SCALE
+	var end_point = Vector3(x2,0,y2) * WORLD_SCALE
 	road_path.push_back([start_point,mid_point,end_point])
 	
 	if SHOW_CURVE_HANDLES:
@@ -311,53 +500,10 @@ func extend_curve(chunk_coords, curve_data, dir, path):
 	
 	return [Vector2(x2, y2) + dir, Vector2(x2, y2) - Vector2(x1, y1)]
 
-
-
-
-func generate_forest(): 
-	#load("res://RAW_RESOURCES/helpers.gd").add_mesh_to_library_shaded("res://world/map/1m_tiles.tres", "res://world/map/trees/tall_pine.obj", "tall_pine")
-	for i in heightmap.size():
-		for j in heightmap[i].size():
-			var Z = heightmap[i][j]+1
-			if not FOOL.range_i(0,TREE_ODDS):
-				var rot_i = [0, 16, 10, 22]
-				var rot = rot_i[FOOL.range_i(0, 3)]
-				if is_flat_and_centered(Vector2(i,j), 1) and \
-				is_no_trees_nearby(Vector2(i,j), MIN_TREE_SPACING): set_tile(i,j,Z,"TALL_PINE",rot)
-				#else: set_tile(i,j,Z,"TREE_"+str(FOOL.range_i(0,1)),rot)
-
-
-func is_flat_and_centered(coords: Vector2, search_range: int) -> bool:
-	var height = heightmap[coords.x][coords.y]
-
-	if coords.x == 0 or coords.x == CHUNK_COUNT*CHUNK_SIZE-1 \
-	or coords.y == 0 or coords.y == CHUNK_COUNT*CHUNK_SIZE-1:
-		return false
-	
-	for i in range(coords.x - search_range, coords.x + search_range + 1):
-		for j in range(coords.y - search_range, coords.y + search_range + 1):
-			if heightmap[i][j] != height: return false
-	
-	return true
-
-func is_no_trees_nearby(coords: Vector2, search_range: int):
-	if coords.x == 0 or coords.x == CHUNK_COUNT*CHUNK_SIZE-1 \
-	or coords.y == 0 or coords.y == CHUNK_COUNT*CHUNK_SIZE-1:
-		return false
-	
-	var height = heightmap[coords.x][coords.y]
-	for i in range(coords.x - search_range, coords.x + search_range + 1):
-		for j in range(coords.y - search_range, coords.y + search_range + 1):
-			for k in range(height - search_range, height + search_range + 1):
-				if MAP_GRID.get_cell_item(Vector3(i,k,j)) == TILES["TALL_PINE"]: return false
-	
-	return true
-
 # this section of code is adapted from the work of Alois Zingl
 # plotLine, plotQuadBezier and plotQuadBezierSeg are not my own
 # read his paper on Bresenham Rasterization here: 
 # https://zingl.github.io/Bresenham.pdf 
-
 func plotLine(x0, y0, x1, y1, tile):
 	var dx = abs(x1 - x0)
 	var sx = 1 if x0 < x1 else -1
@@ -367,7 +513,7 @@ func plotLine(x0, y0, x1, y1, tile):
 	var e2
 	
 	while true:
-		set_path(x0 as int, y0 as int, tile)
+		draw_filled_circle(x0 as int, y0 as int, tile)
 		e2 = 2*err
 		
 		if e2 >= dy:
@@ -424,7 +570,7 @@ func plotQuadBezierSeg(x0, y0, x1, y1, x2, y2, tile):
 		yy += yy
 		err = dx+dy+xy
 		
-		set_path(x0 as int, y0 as int, tile)
+		draw_filled_circle(x0 as int, y0 as int, tile)
 		if x0 == x2 and y0 == y2: return true
 		y1 = 2*err < dx
 		if 2*err > dy:
@@ -438,7 +584,7 @@ func plotQuadBezierSeg(x0, y0, x1, y1, x2, y2, tile):
 			dx += xx
 			err += dx
 		while dy < 0 and dx > 0:
-			set_path(x0 as int, y0 as int, tile)
+			draw_filled_circle(x0 as int, y0 as int, tile)
 			if x0 == x2 and y0 == y2: return true
 			y1 = 2*err < dx
 			if 2*err > dy:
@@ -494,3 +640,8 @@ func plotQuadBezier(x0, y0, x1, y1, x2, y2, tile):
 		y1 = y
 		y0 = y1
 	plotQuadBezierSeg(x0,y0,x1,y1,x2,y2,tile)
+
+
+
+
+

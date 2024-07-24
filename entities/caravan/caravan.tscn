@@ -1,40 +1,63 @@
-[gd_scene load_steps=5 format=3 uid="uid://fssa0tkmrviw"]
+[gd_scene load_steps=6 format=3 uid="uid://fssa0tkmrviw"]
 
 [ext_resource type="Script" path="res://entities/caravan/caravan.gd" id="1_0smmk"]
-[ext_resource type="PackedScene" uid="uid://dbjjw7nxppivt" path="res://entities/caravan/caravan.glb" id="1_145h4"]
-[ext_resource type="PackedScene" uid="uid://bjnimjn3nfv7p" path="res://entities/caravan/horts.glb" id="3_p3f7d"]
+[ext_resource type="PackedScene" uid="uid://dllcdsev421gt" path="res://entities/caravan/horts_and_wagon.tscn" id="2_ilw6x"]
+[ext_resource type="PackedScene" uid="uid://dbjjw7nxppivt" path="res://entities/caravan/wagon.glb" id="3_7ltsq"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_qtgm4"]
-size = Vector3(8, 6.53857, 4)
+size = Vector3(8, 6.30444, 4)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_puifi"]
+height = 1.0
 
 [node name="Caravan" type="PathFollow3D"]
-v_offset = 2.5
 rotation_mode = 2
 loop = false
 tilt_enabled = false
 script = ExtResource("1_0smmk")
 
-[node name="caravan" parent="." instance=ExtResource("1_145h4")]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 0, 0)
-rotation_order = 0
-
-[node name="horts" parent="." instance=ExtResource("3_p3f7d")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.5, -7)
-
-[node name="horts2" parent="." instance=ExtResource("3_p3f7d")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0.5, -7)
-
-[node name="horts3" parent="." instance=ExtResource("3_p3f7d")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 0.5, -12)
-
-[node name="horts4" parent="." instance=ExtResource("3_p3f7d")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0.5, -12)
-
 [node name="AnimatableBody3D" type="AnimatableBody3D" parent="."]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="AnimatableBody3D"]
-transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 1.62909, 0)
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 3.17141, 0)
 shape = SubResource("BoxShape3D_qtgm4")
+
+[node name="HorseAndCarriage" parent="AnimatableBody3D" instance=ExtResource("2_ilw6x")]
+visible = false
+
+[node name="wagon" parent="AnimatableBody3D" instance=ExtResource("3_7ltsq")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 1.56106, 0)
 
 [node name="RemoteTransform3D" type="RemoteTransform3D" parent="."]
 remote_path = NodePath("../AnimatableBody3D")
+use_global_coordinates = false
+
+[node name="suspension" type="Node3D" parent="."]
+
+[node name="FL" type="Node3D" parent="suspension"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, -4)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="suspension/FL"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("CapsuleMesh_puifi")
+
+[node name="FR" type="Node3D" parent="suspension"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -4)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="suspension/FR"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("CapsuleMesh_puifi")
+
+[node name="BL" type="Node3D" parent="suspension"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 4)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="suspension/BL"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("CapsuleMesh_puifi")
+
+[node name="BR" type="Node3D" parent="suspension"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 4)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="suspension/BR"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("CapsuleMesh_puifi")

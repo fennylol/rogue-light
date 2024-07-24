@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://83cqsdl8tpcn"]
+[gd_scene load_steps=12 format=3 uid="uid://83cqsdl8tpcn"]
 
 [ext_resource type="FontFile" uid="uid://draw0t2cfc7oc" path="res://GUI/Shantell_Sans-Informal_Bouncy_Light_Italic.otf" id="1_30r3m"]
 [ext_resource type="Script" path="res://GUI/GUI.gd" id="1_jfud4"]
@@ -16,6 +16,9 @@ font_size = 64
 [sub_resource type="LabelSettings" id="LabelSettings_njrln"]
 font = ExtResource("1_30r3m")
 font_size = 32
+
+[sub_resource type="Theme" id="Theme_sbj4x"]
+default_font_size = 11
 
 [node name="Gui" type="Control"]
 layout_mode = 3
@@ -118,3 +121,20 @@ offset_left = -128.0
 offset_top = 31.0
 offset_right = 128.0
 offset_bottom = -0.0240173
+
+[node name="RichTextLabel" type="RichTextLabel" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -205.0
+offset_right = 110.0
+grow_vertical = 0
+theme = SubResource("Theme_sbj4x")
+text = "TODO LIST:
+1 make caracvan drive good
+2 add points of interest
+3 interact with caravan (do this before 1)"
+fit_content = true
+scroll_active = false
+autowrap_mode = 2

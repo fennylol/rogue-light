@@ -1,0 +1,22 @@
+[gd_scene load_steps=3 format=3 uid="uid://dllcdsev421gt"]
+
+[ext_resource type="PackedScene" uid="uid://dbjjw7nxppivt" path="res://entities/caravan/wagon.glb" id="1_okjex"]
+[ext_resource type="PackedScene" uid="uid://bjnimjn3nfv7p" path="res://entities/caravan/horts.glb" id="2_2bqba"]
+
+[node name="HortsAndWagon" type="Node3D"]
+
+[node name="caravan" parent="." instance=ExtResource("1_okjex")]
+transform = Transform3D(-4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, 0, 1.61574, 0)
+rotation_order = 0
+
+[node name="horts" parent="." instance=ExtResource("2_2bqba")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 2.03634, -7)
+
+[node name="horts2" parent="." instance=ExtResource("2_2bqba")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 2.03634, -7)
+
+[node name="horts3" parent="." instance=ExtResource("2_2bqba")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1, 2.03634, -12)
+
+[node name="horts4" parent="." instance=ExtResource("2_2bqba")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 2.03634, -12)

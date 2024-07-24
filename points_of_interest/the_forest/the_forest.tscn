@@ -23,15 +23,6 @@ size = 20.0
 
 [node name="world_parts" type="Node3D" parent="."]
 
-[node name="GridMap" type="GridMap" parent="world_parts"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, -0.5)
-mesh_library = ExtResource("4_fhid5")
-cell_size = Vector3(1, 1, 1)
-data = {
-"cells": PackedInt32Array(65536, 65519, 2, 131057, 0, 2, 131056, 0, 2, 131055, 0, 2, 65536, 65521, 2, 65536, 65520, 2, 327680, 0, 2, 393216, 0, 2, 131071, 0, 2, 65536, 65535, 2, 131071, 2, 2, 131071, 4, 2, 131071, 6, 2, 131071, 8, 2, 131071, 10, 2, 131071, 12, 2, 131071, 14, 2, 131071, 16, 2, 65538, 65535, 2, 65540, 65535, 2, 65542, 65535, 2, 65544, 65535, 2, 65546, 65535, 2, 65548, 65535, 2, 65550, 65535, 2, 65552, 65535, 2, 196607, 6, 6)
-}
-metadata/_editor_floor_ = Vector3(0, 2, 0)
-
 [node name="lights" type="Node3D" parent="world_parts"]
 transform = Transform3D(-1, 0, -1.50996e-07, 0, 1, 0, 1.50996e-07, 0, -1, 0, 0, 0)
 
@@ -68,6 +59,17 @@ transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 
 rotation_order = 5
 light_color = Color(0.286275, 0.498039, 0.560784, 1)
 light_energy = 0.05
+
+[node name="points_of_interest" type="Node3D" parent="world_parts"]
+
+[node name="GridMap" type="GridMap" parent="world_parts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0, -0.5)
+mesh_library = ExtResource("4_fhid5")
+cell_size = Vector3(1, 1, 1)
+data = {
+"cells": PackedInt32Array(65536, 65519, 2, 131057, 0, 2, 131056, 0, 2, 131055, 0, 2, 65536, 65521, 2, 65536, 65520, 2, 327680, 0, 2, 393216, 0, 2, 131071, 0, 2, 65536, 65535, 2, 131071, 2, 2, 131071, 4, 2, 131071, 6, 2, 131071, 8, 2, 131071, 10, 2, 131071, 12, 2, 131071, 14, 2, 131071, 16, 2, 65538, 65535, 2, 65540, 65535, 2, 65542, 65535, 2, 65544, 65535, 2, 65546, 65535, 2, 65548, 65535, 2, 65550, 65535, 2, 65552, 65535, 2, 196607, 6, 6, 131080, 65535, 1441801)
+}
+metadata/_editor_floor_ = Vector3(0, 2, 0)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="world_parts"]
 environment = SubResource("Environment_clwrb")
