@@ -44,7 +44,7 @@ var CHUNK_SIZE: int
 var CHUNK_COUNT: int
 var MAX_HEIGHT: int
 var heightmap: Array
-var MAP_GRID = GridMap.new()
+var MAP_GRID := GridMap.new()
 #const WORLD_SCALE = Vector3(1,1,1)
 #const MESH_LIB = preload("res://points_of_interest/the_forest/1m_tiles.tres")
 #const WORLD_SCALE = Vector3(1,.5,1)
@@ -77,6 +77,7 @@ const HANDLE_HEIGHT: int = 2
 func _init(cs: int = 16, cc: int = 16, mh: int = 40, pr: int = 3, pt: String = "PATH", dm: bool = false):
 	CHUNK_COUNT = cc
 	CHUNK_SIZE = cs
+	MAP_GRID.set_octant_size(cs)
 	MAX_HEIGHT = mh * int(not dm)
 	PATH_RADIUS = pr
 	PATH_TILE = pt
@@ -88,6 +89,7 @@ func _init(cs: int = 16, cc: int = 16, mh: int = 40, pr: int = 3, pt: String = "
 
 func get_heightmap(): return heightmap
 func get_map_grid(): return MAP_GRID
+func get_chunk(chunk_coords: Vector2): pass
 func get_road_path(): return road_path
 func get_world_scale(): return WORLD_SCALE
 func get_points_of_interest(): return points_of_interest
@@ -291,6 +293,7 @@ func generate_chunks(height_map: Array = [], show_chunks: bool = SHOW_CHUNKS):
 			if show_chunks: set_column(i,j,hm[i][j],"WHITE" if (i/CHUNK_SIZE + j/CHUNK_SIZE)%2 == 0 else "BLACK")
 			else: 
 				var type =  "STONE" if hm[i][j] > 3*MAX_HEIGHT/4 else \
+							("STONE" if FOOL.range_i((5*MAX_HEIGHT/8),3*MAX_HEIGHT/4)<hm[i][j] else "GRASS") if hm[i][j] > 5*MAX_HEIGHT/8 else \
 							"GRASS" if hm[i][j] > MAX_HEIGHT/2 else \
 							"GRASS" if hm[i][j] > MAX_HEIGHT/4 else \
 							"WOOD"
@@ -342,7 +345,9 @@ func generate_forest():
 				var rot = rot_i[FOOL.range_i(0, 3)]
 				if MAX_HEIGHT <= 60 or true:
 					if is_flat_and_centered(Vector2(i,j), 1) and \
-					is_no_trees_nearby(Vector2(i,j), MIN_TREE_SPACING): set_tile(i,j,Z,"TALL_PINE",true,rot)
+					MAP_GRID.get_cell_item(Vector3(i,Z-1,j)) != TILES["STONE"] and \
+					is_no_trees_nearby(Vector2(i,j), MIN_TREE_SPACING): 
+						set_tile(i,j,Z,"TALL_PINE",true,rot)
 				elif is_no_trees_nearby(Vector2(i,j), MIN_TREE_SPACING*2): set_tile(i,j,Z,"TALL_PINE",true,rot)
 
 func is_flat_and_centered(coords: Vector2, search_range: int) -> bool:

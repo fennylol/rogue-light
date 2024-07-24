@@ -42,7 +42,7 @@ const MIN_CAM_SIZE: float = 5
 const MAX_CAM_SIZE: float = 100
 var target_size: float = CAM_SIZE
 
-const MAX_PITCH: float = 2.5 #0.5
+const MAX_PITCH: float = 0.5
 var target_rotation: float = 0.0
 var target_pitch: float = 0.0
 var mouse_pos := Vector2.ZERO
