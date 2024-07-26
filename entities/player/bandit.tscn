@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://colwxwbes7ubn"]
+[gd_scene load_steps=6 format=3 uid="uid://colwxwbes7ubn"]
 
 [ext_resource type="Script" path="res://entities/player/bandit.gd" id="1_k55n4"]
 [ext_resource type="PackedScene" uid="uid://co2qduwbi8yak" path="res://entities/player/bandit.glb" id="2_vweob"]
+[ext_resource type="PackedScene" uid="uid://83cqsdl8tpcn" path="res://GUI/GUI.tscn" id="3_ll0hh"]
 
 [sub_resource type="SphereMesh" id="SphereMesh_un3lm"]
 radius = 0.25
@@ -10,7 +11,7 @@ height = 0.5
 [sub_resource type="BoxShape3D" id="BoxShape3D_hmypn"]
 size = Vector3(2, 3, 2)
 
-[node name="Bandit" type="CharacterBody3D"]
+[node name="Bandit" type="CharacterBody3D" groups=["player"]]
 transform = Transform3D(0.45, 0, 0, 0, 0.45, 0, 0, 0, 0.45, 0, 0, 0)
 floor_block_on_wall = false
 script = ExtResource("1_k55n4")
@@ -26,8 +27,8 @@ spot_angle = 31.1952
 [node name="GPUParticles3D" type="CPUParticles3D" parent="bandit"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
 emitting = false
-amount = 7
-lifetime = 0.5
+amount = 4
+randomness = 1.0
 mesh = SubResource("SphereMesh_un3lm")
 emission_shape = 3
 emission_box_extents = Vector3(2, 0, 1)
@@ -39,3 +40,5 @@ transform = Transform3D(-9.71364e-08, 0, -2.22222, 0, 2.22222, 0, 2.22222, 0, -9
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.75, 0)
 shape = SubResource("BoxShape3D_hmypn")
+
+[node name="Gui" parent="." instance=ExtResource("3_ll0hh")]

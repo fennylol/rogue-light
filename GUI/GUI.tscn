@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://83cqsdl8tpcn"]
+[gd_scene load_steps=18 format=3 uid="uid://83cqsdl8tpcn"]
 
 [ext_resource type="FontFile" uid="uid://draw0t2cfc7oc" path="res://GUI/Shantell_Sans-Informal_Bouncy_Light_Italic.otf" id="1_30r3m"]
 [ext_resource type="Script" path="res://GUI/GUI.gd" id="1_jfud4"]
@@ -8,6 +8,12 @@
 [ext_resource type="Texture2D" uid="uid://bf6fo85g6h0k5" path="res://GUI/clock/clock_over.png" id="3_fdxp3"]
 [ext_resource type="Texture2D" uid="uid://cbfs0xwou1fq7" path="res://GUI/input/input.png" id="5_rsew7"]
 [ext_resource type="PackedScene" uid="uid://d1uk3sxgrgtyh" path="res://GUI/input/input_zone.tscn" id="7_ksl5f"]
+[ext_resource type="Texture2D" uid="uid://br5qf30c0p368" path="res://GUI/bars/health_back.png" id="9_omcn7"]
+[ext_resource type="Texture2D" uid="uid://3en3ph2172cc" path="res://GUI/bars/health_front.png" id="10_rqhut"]
+[ext_resource type="Texture2D" uid="uid://1v46f8g6gwm7" path="res://GUI/bars/stam_prog_loss.png" id="10_x5hrk"]
+[ext_resource type="Texture2D" uid="uid://cbqs62nrdu6bt" path="res://GUI/bars/stam_prog.png" id="11_or427"]
+[ext_resource type="Texture2D" uid="uid://dmeoqsairtnpe" path="res://GUI/bars/health_progress.png" id="12_dc1oh"]
+[ext_resource type="Texture2D" uid="uid://3ug612rwo1r1" path="res://GUI/bars/health_prog_loss.png" id="13_ipllf"]
 
 [sub_resource type="LabelSettings" id="LabelSettings_jmy53"]
 font = ExtResource("1_30r3m")
@@ -16,6 +22,9 @@ font_size = 64
 [sub_resource type="LabelSettings" id="LabelSettings_njrln"]
 font = ExtResource("1_30r3m")
 font_size = 32
+
+[sub_resource type="Theme" id="Theme_nvigs"]
+default_font = ExtResource("1_30r3m")
 
 [node name="Gui" type="Control"]
 layout_mode = 3
@@ -26,67 +35,88 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_jfud4")
 
-[node name="compass" type="Control" parent="."]
-custom_minimum_size = Vector2(128, 0)
+[node name="left" type="VBoxContainer" parent="."]
 layout_mode = 1
-anchors_preset = 0
-offset_right = 128.0
-offset_bottom = 135.0
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -300.0
+grow_horizontal = 0
+grow_vertical = 2
 
-[node name="compass_progress" type="TextureRect" parent="compass"]
+[node name="dials" type="HBoxContainer" parent="left"]
+layout_mode = 2
+alignment = 1
+
+[node name="compass" type="Control" parent="left/dials"]
+custom_minimum_size = Vector2(128, 0)
+layout_mode = 2
+
+[node name="compass_progress" type="TextureRect" parent="left/dials/compass"]
 layout_mode = 1
 offset_right = 128.0
 offset_bottom = 128.0
 pivot_offset = Vector2(64, 64)
 texture = ExtResource("2_qwkvw")
 
-[node name="compass_front" type="TextureRect" parent="compass"]
+[node name="compass_front" type="TextureRect" parent="left/dials/compass"]
 layout_mode = 1
 offset_right = 128.0
 offset_bottom = 128.0
 texture = ExtResource("3_dwx3c")
 
-[node name="time_zone" type="HBoxContainer" parent="."]
+[node name="clock" type="Control" parent="left/dials"]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+
+[node name="clock_progress" type="TextureRect" parent="left/dials/clock"]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -144.0
-offset_bottom = 41.0
+offset_left = -128.0
+offset_bottom = 128.0
 grow_horizontal = 0
+pivot_offset = Vector2(64, 64)
+texture = ExtResource("2_qw2o7")
 
-[node name="text" type="VBoxContainer" parent="time_zone"]
-layout_mode = 2
+[node name="clock_front" type="TextureRect" parent="left/dials/clock"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -128.0
+offset_bottom = 128.0
+grow_horizontal = 0
+texture = ExtResource("3_fdxp3")
 
-[node name="time_display" type="Label" parent="time_zone/text"]
+[node name="time_display" type="Label" parent="left"]
 layout_mode = 2
 text = "12:00 AM"
 label_settings = SubResource("LabelSettings_jmy53")
 horizontal_alignment = 2
 uppercase = true
 
-[node name="day_display" type="Label" parent="time_zone/text"]
+[node name="day_display" type="Label" parent="left"]
 layout_mode = 2
 text = "day: 0"
 label_settings = SubResource("LabelSettings_njrln")
 horizontal_alignment = 2
 
-[node name="clock" type="Control" parent="time_zone"]
-custom_minimum_size = Vector2(128, 0)
+[node name="spacer" type="Control" parent="left"]
 layout_mode = 2
+size_flags_vertical = 3
 
-[node name="clock_progress" type="TextureRect" parent="time_zone/clock"]
+[node name="output_zone" type="RichTextLabel" parent="."]
 layout_mode = 1
-offset_right = 128.0
-offset_bottom = 128.0
-pivot_offset = Vector2(64, 64)
-texture = ExtResource("2_qw2o7")
-
-[node name="clock_front" type="TextureRect" parent="time_zone/clock"]
-layout_mode = 1
-offset_right = 128.0
-offset_bottom = 128.0
-texture = ExtResource("3_fdxp3")
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -514.0
+offset_right = 255.0
+grow_vertical = 0
+theme = SubResource("Theme_nvigs")
 
 [node name="command_zone" type="VBoxContainer" parent="."]
 visible = false
@@ -110,11 +140,56 @@ layout_mode = 2
 layout_mode = 2
 texture = ExtResource("5_rsew7")
 
-[node name="output_zone" type="RichTextLabel" parent="command_zone/bottom_log"]
-layout_mode = 2
+[node name="bars" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
 anchor_right = 1.0
-anchor_bottom = 5.266
-offset_left = -128.0
-offset_top = 31.0
-offset_right = 128.0
-offset_bottom = -0.0240173
+anchor_bottom = 1.0
+offset_top = -64.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="stam" type="CenterContainer" parent="bars"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="stam_loss_bar" type="TextureProgressBar" parent="bars/stam"]
+layout_mode = 2
+size_flags_horizontal = 3
+step = 0.001
+value = 100.0
+texture_under = ExtResource("9_omcn7")
+texture_progress = ExtResource("10_x5hrk")
+
+[node name="stam_bar" type="TextureProgressBar" parent="bars/stam"]
+layout_mode = 2
+size_flags_horizontal = 3
+step = 0.001
+value = 100.0
+texture_over = ExtResource("10_rqhut")
+texture_progress = ExtResource("11_or427")
+
+[node name="spacer" type="Control" parent="bars"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="health" type="CenterContainer" parent="bars"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="health_loss_bar" type="TextureProgressBar" parent="bars/health"]
+layout_mode = 2
+size_flags_horizontal = 3
+step = 0.001
+value = 100.0
+texture_under = ExtResource("9_omcn7")
+texture_progress = ExtResource("13_ipllf")
+
+[node name="health_bar" type="TextureProgressBar" parent="bars/health"]
+layout_mode = 2
+size_flags_horizontal = 3
+step = 0.001
+value = 100.0
+texture_over = ExtResource("10_rqhut")
+texture_progress = ExtResource("12_dc1oh")

@@ -6,14 +6,20 @@ extends Control
 enum {AM, PM}
 enum {HOUR, MINUTE, PERIOD, DAY}
 
-@onready var text_display = $time_zone/text as VBoxContainer
-@onready var clock_display = $time_zone/clock/clock_progress as TextureRect
-
+@onready var left_container = $left as VBoxContainer
 @onready var input_zone = $command_zone/input_zone as TextEdit
 @onready var command_zone = $command_zone as VBoxContainer
-@onready var output = $command_zone/bottom_log/output_zone as RichTextLabel
+@onready var output = $output_zone as RichTextLabel
 
-@onready var compass_face = $compass/compass_progress as TextureRect
+@onready var stam_bar = $bars/stam/stam_bar as TextureProgressBar
+@onready var stam_loss_bar = $bars/stam/stam_loss_bar as TextureProgressBar
+var last_stam: float = 0
+@onready var health_bar = $bars/health/health_bar as TextureProgressBar
+@onready var health_loss_bar = $bars/health/health_loss_bar as TextureProgressBar
+var last_health: float = 0
+
+@onready var clock_display = $left/dials/clock/clock_progress as TextureRect
+@onready var compass_face = $left/dials/compass/compass_progress as TextureRect
 var target_rotation: float = 0.0
 var angular_velocity: float = 0.0
 
@@ -27,7 +33,20 @@ func _ready():
 	DUKE.message_dispatch.connect(recieve_message)
 	DUKE.command_dispatch.connect(recieve_orders)
 
-func _process(_delta): command_window()
+func _process(delta): 
+	command_window()
+	
+	if last_stam > stam_bar.value: pass
+	elif stam_loss_bar.value > stam_bar.value:
+		stam_loss_bar.value = lerp(stam_loss_bar.value, stam_bar.value, 10*delta)
+	else: stam_loss_bar.value = stam_bar.value
+	last_stam = stam_bar.value
+	
+	
+	if health_loss_bar.value > health_bar.value:
+		health_loss_bar.value = lerp(health_loss_bar.value, health_bar.value, 1*delta)
+	else: health_loss_bar.value = health_bar.value
+	last_health = health_bar.value
 
 func _physics_process(delta): update_compass_display(delta)
 
@@ -45,8 +64,8 @@ func update_time_display(TIME: Vector4i):
 	var hour = str(TIME[HOUR] if TIME[HOUR] else 12)  
 	var minute = str(TIME[MINUTE]).pad_zeros(2)
 	var period = "PM" if TIME[PERIOD] else "AM" 
-	text_display.get_child(0).text = hour + ":" + minute + " " + period
-	text_display.get_child(1).text = "day: " + str(TIME[DAY]) 
+	left_container.find_child("time_display") .text = hour + ":" + minute + " " + period
+	left_container.find_child("day_display").text = "day: " + str(TIME[DAY]) 
 	
 	hour = 12 - TIME[HOUR] + TIME[PERIOD]*12 
 	minute = TIME[MINUTE]
@@ -69,10 +88,18 @@ func update_compass_display(delta):
 		angular_velocity = 0.0
 
 
+
 func rotate_compass(rot: float): target_rotation += rot
 
-func prepend_output_text(message): output.text = "- "+str(message)+"\n\n"+output.text
+func prepend_output_text(message): output.text += "- "+str(message)+"\n\n"#+output.text
 
+func set_health(amount: float): health_bar.value = amount
+func set_stam(amount: float): stam_bar.value = amount
+func set_bar_max(health_max:float, stam_max: float):
+	health_bar.max_value = health_max
+	stam_bar.max_value = stam_max
+	stam_loss_bar.max_value = stam_max
+func get_bar_max()->Vector2: return Vector2(health_bar.max_value,stam_bar.max_value)
 
 func command_window():
 	if not command_zone.visible:
@@ -82,7 +109,8 @@ func command_window():
 			input_zone.grab_focus()
 			#DUKE.pause_game()
 	else:
-		if Input.is_action_just_pressed("DEV_command") or Input.is_action_just_pressed("esc"):
+		#all handling of the text itself is found in input_zone.gd
+		if Input.is_action_just_pressed("esc"): # or Input.is_action_just_pressed("DEV_command"):
 			command_zone.visible = false
 			DUKE.pause_game(false)
 		elif Input.is_action_just_pressed("submit"):

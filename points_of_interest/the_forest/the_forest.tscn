@@ -1,9 +1,8 @@
-[gd_scene load_steps=6 format=3 uid="uid://cpxaw5tb41bbg"]
+[gd_scene load_steps=5 format=3 uid="uid://cpxaw5tb41bbg"]
 
 [ext_resource type="Script" path="res://points_of_interest/the_forest/world.gd" id="1_ojsoe"]
 [ext_resource type="PackedScene" uid="uid://colwxwbes7ubn" path="res://entities/player/bandit.tscn" id="2_qb25q"]
 [ext_resource type="MeshLibrary" uid="uid://dxw4swdbv05fa" path="res://points_of_interest/the_forest/1m_tiles.tres" id="4_fhid5"]
-[ext_resource type="PackedScene" uid="uid://83cqsdl8tpcn" path="res://GUI/GUI.tscn" id="5_wo31t"]
 
 [sub_resource type="Environment" id="Environment_clwrb"]
 background_color = Color(0.384314, 0.737255, 0.835294, 1)
@@ -16,7 +15,7 @@ script = ExtResource("1_ojsoe")
 [node name="camera_man" type="Node3D" parent="."]
 
 [node name="Camera3D" type="Camera3D" parent="camera_man"]
-transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, 155, 220)
+transform = Transform3D(1, 0, 0, 0, 0.819152, 0.573576, 0, -0.573576, 0.819152, 0, 1542, 2200)
 projection = 1
 current = true
 size = 20.0
@@ -73,5 +72,3 @@ metadata/_editor_floor_ = Vector3(0, 2, 0)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="world_parts"]
 environment = SubResource("Environment_clwrb")
-
-[node name="Gui" parent="." instance=ExtResource("5_wo31t")]

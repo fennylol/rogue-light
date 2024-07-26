@@ -19,7 +19,7 @@ const POINTS_OF_INTEREST = {
 		"attempts": 10, 
 		"POI_spacing": 20,
 		"ground": "SNOW", 
-		"scene": "res://points_of_interest/camp/tent.glb"
+		"scene": "res://points_of_interest/camp/tent.tscn"
 	},
 	
 	"stalled_caravan": {
@@ -32,6 +32,7 @@ const POINTS_OF_INTEREST = {
 	
 	"the_sacred_one": {
 		"attempts": 1,
+		"size": 1,
 		"road_spacing": 100, 
 		"POI_spacing": 100
 	}
@@ -146,6 +147,24 @@ const COMMANDS = {
 		},
 		"desc": "camera",
 		"targets": ["world.gd"]
+	},
+	
+	"health": {
+		"accepted_options":{
+			"set": "sets health to specified value",
+			"take": "reduces health by specified value. negative inputs will heal"
+		},
+		"desc": "manage player health",
+		"targets": ["bandit.gd"]
+	},
+	
+	"stam": {
+		"accepted_options":{
+			"set": "sets stam to specified value",
+			"take": "reduces stam by specified value. negative inputs will heal"
+		},
+		"desc": "manage player stam",
+		"targets": ["bandit.gd"]
 	}
 }
 

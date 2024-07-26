@@ -18,23 +18,22 @@ const MasterOfWorks = preload("res://noblemen/themasterofworks.gd")
 var Caravan = preload("res://entities/caravan/caravan.gd")
 @onready var PLAYER = $Bandit as CharacterBody3D
 @onready var CAMERA = $camera_man as Node3D
-@onready var GUI = $Gui as Control
 @onready var WORLD = $world_parts as Node3D
 @onready var HEAVENLY_BODIES = $world_parts/lights/heavenly_bodies as Node3D
 @onready var STATIC_LIGHTS = $world_parts/lights/static_lights as Node3D
 @onready var POINTS_OF_INTEREST = $world_parts/points_of_interest as Node3D
 @onready var MAP_GRID = $world_parts/GridMap as GridMap
-const KILL_HEIGHT = -10
+
 
 ### WORLD GEN PARAMETERS ###
-const CHUNK_SIZE: int = 64
-const CHUNK_COUNT: int = 8
+const CHUNK_SIZE: int = 32
+const CHUNK_COUNT: int = 16
 const MAX_HEIGHT: int = 255
 const PATH_RADIUS: int = 3 #dist past the centerline on either side. path will be 2r+1 tiles wide
 const PATH_TILE: String = "PATH"
 const DEBUG_MODE: bool = false
 var MASTER_OF_WORKS := MasterOfWorks.new()
-
+const KILL_HEIGHT = -10
 
 ### CAMERA PARAMETERS ###
 const CAM_SIZE: float = 20
@@ -68,7 +67,9 @@ func _ready():
 func _process(delta):
 	move_camera(delta)
 	if DUKE.PAUSED: return
-	if PLAYER.position.y <= KILL_HEIGHT: move_player(false,false, MASTER_OF_WORKS.get_world_scale())
+	if PLAYER.position.y <= KILL_HEIGHT: 
+		move_player(false,false, MASTER_OF_WORKS.get_world_scale(), PLAYER.get_spawn_point())
+		PLAYER.take_damage()
 	
 	var fade_material: Material = MAP_GRID.mesh_library.get_item_mesh(ARCHIVIST.TILE_NAMES["TALL_PINE"]).surface_get_material(0)
 	if fade_material is ShaderMaterial:
@@ -162,7 +163,9 @@ func generate_map(r: bool = true, s: bool = true):
 			scene.position = poi[MASTER_OF_WORKS.COORDS]
 			scene.name = poi[MASTER_OF_WORKS.NAME]
 			scene.rotation.y = FOOL.range_f(0, 2*PI)
-			if poi[MASTER_OF_WORKS.NAME] == "camp": move_player(r,s, MASTER_OF_WORKS.get_world_scale(), poi[MASTER_OF_WORKS.COORDS])
+			if poi[MASTER_OF_WORKS.NAME] == "camp": 
+				PLAYER.set_spawn_point(scene.get_tent_position())#poi[MASTER_OF_WORKS.COORDS]
+				move_player(r, s, MASTER_OF_WORKS.get_world_scale(), PLAYER.get_spawn_point())
 		print("map generation complete")
 	
 	MASTER_OF_WORKS = MasterOfWorks.new(CHUNK_SIZE, CHUNK_COUNT, MAX_HEIGHT, PATH_RADIUS, PATH_TILE, DEBUG_MODE)
@@ -227,7 +230,7 @@ func _input(event):
 			var amount = -event.relative.x * get_process_delta_time()
 			target_rotation += amount
 			PLAYER.rotate_player(amount)
-			GUI.rotate_compass(amount)
+
 		if abs(event.relative.y): 
 			var input = target_pitch + -event.relative.y/abs(event.relative.y) * get_process_delta_time()
 			target_pitch = min(max(input, -MAX_PITCH), MAX_PITCH)
@@ -285,12 +288,12 @@ func recieve_orders(orders: Dictionary):
 			cam.set_current(true)
 			PLAYER.enable_camera(false)
 			cam.set_projection(Camera3D.PROJECTION_ORTHOGONAL)
-			cam.position = Vector3(0,155,220)
+			cam.position = Vector3(0,1542,2200)
 		elif options.has("p"): 
 			cam.set_current(true)
 			PLAYER.enable_camera(false)
 			cam.set_projection(Camera3D.PROJECTION_PERSPECTIVE)
-			cam.position = Vector3(0,15.5,22.0)
+			cam.position = Vector3(0,15.42,22.0)
 		elif options.has("f"):
 			PLAYER.enable_camera()
 			cam.set_current(false)

@@ -1,11 +1,11 @@
-extends Thread
+extends Node
 ### WISHLIST ###
 # [x] change to cubic bezier <- this doent help. instead draw a vector from the endpoint to the midpoint, negate that, make that the vector to the next chunk's midpoint.
 # [x] trees
 # [smarter generation] 
 #   L [ ] create world as one block
 #   L [ ] using hightmap, go through and paint biomes
-# [ ] fix vertical gaps (match min height of all adjacent tiles)
+# [x] fix vertical gaps (match min height of all adjacent tiles)
 # [ ] regularize Y-up/Z-up (make it clearing when each is what.) 
 # [ ] tunr x/y into vector inputs. 
 # [ ] make world scaling more consistent and regular lol
@@ -37,11 +37,13 @@ extends Thread
 
 const TILES = TheArchivist.TILE_NAMES
 var FOOL = TheFool
+var thread: Thread
 signal finished
 
 # WORLD 
 var CHUNK_SIZE: int
 var CHUNK_COUNT: int
+var EDGE_LENGTH: int
 var MAX_HEIGHT: int
 var heightmap: Array
 var MAP_GRID := GridMap.new()
@@ -77,6 +79,7 @@ const HANDLE_HEIGHT: int = 2
 func _init(cs: int = 16, cc: int = 16, mh: int = 40, pr: int = 3, pt: String = "PATH", dm: bool = false):
 	CHUNK_COUNT = cc
 	CHUNK_SIZE = cs
+	EDGE_LENGTH = cs*cc
 	MAP_GRID.set_octant_size(cs)
 	MAX_HEIGHT = mh * int(not dm)
 	PATH_RADIUS = pr
@@ -95,7 +98,7 @@ func get_world_scale(): return WORLD_SCALE
 func get_points_of_interest(): return points_of_interest
 
 func point_is_on_grid(coords: Vector2) -> bool: 
-	return coords.x >= 0 and coords.x < CHUNK_SIZE*CHUNK_COUNT and coords.y >= 0 and coords.y < CHUNK_SIZE*CHUNK_COUNT
+	return coords.x >= 0 and coords.x < EDGE_LENGTH and coords.y >= 0 and coords.y < EDGE_LENGTH
 
 func point_is_near_POI(coords: Vector3, search_range: int) -> bool: 
 	if search_range == 0: return false
@@ -112,7 +115,20 @@ func point_is_near_path(test_point: Vector2, search_range: float) -> bool:
 				return true
 	return false
 
+func find_tile_at_point(coords: Vector2) -> String:
+	var answer: String = ""
+	for tile in TILES.keys(): 
+		if TILES[tile] == MAP_GRID.get_cell_item(Vector3(coords.x,heightmap[coords.x][coords.y],coords.y)): 
+			answer = tile
+	return answer
 
+func find_tile_from_height(h: int) -> String:
+	return "STONE" if h > 3*MAX_HEIGHT/4 else \
+			("STONE" if FOOL.range_i((5*MAX_HEIGHT/8),3*MAX_HEIGHT/4) < h else "GRASS") if h > 5*MAX_HEIGHT/8 else \
+			"GRASS" if h > MAX_HEIGHT/2 else \
+			"GRASS" if h > MAX_HEIGHT/4 else \
+			("GRASS" if FOOL.range_i((MAX_HEIGHT/8),MAX_HEIGHT/4) < h else "WOOD") if h > MAX_HEIGHT/8 else \
+			"WOOD"
 
 func generate_map():
 	var start_time: float = Time.get_unix_time_from_system()
@@ -152,23 +168,28 @@ func generate_map():
 
 # i believe in Z-UP cry about it
 func set_tile(x, y, z, type, single: bool = false, rot = 0): 
-	var tile: int = TILES[type] if typeof(type) == TYPE_STRING else type
-	
-	if single: MAP_GRID.set_cell_item(Vector3(x, z, y), tile, rot)
+	if single: MAP_GRID.set_cell_item(Vector3(x, z, y), TILES[type], rot)
 	else: 
 		var min_z = z
-		for i in range(-1,2):
-			for j in range(-1,2):
-				if point_is_on_grid(Vector2(x+i,y+j)): 
-					if heightmap[x+i][y+j] < min_z: min_z = heightmap[x+i][y+j]
-				else: min_z = 0
-		while z >= min_z:
-			MAP_GRID.set_cell_item(Vector3(x, z, y), tile, rot)
-			z -= 1
+		for i in 1:
+			if point_is_on_grid(Vector2(x+1,y)):
+				if heightmap[x+1][y] < min_z: min_z = heightmap[x+1][y]
+			else: min_z = 0; break
+			if point_is_on_grid(Vector2(x-1,y)):
+				if heightmap[x-1][y] < min_z: min_z = heightmap[x-1][y]
+			else: min_z = 0; break
+			if point_is_on_grid(Vector2(x,y+1)):
+				if heightmap[x][y+1] < min_z: min_z = heightmap[x][y+1]
+			else: min_z = 0; break
+			if point_is_on_grid(Vector2(x,y-1)):
+				if heightmap[x][y-1] < min_z: min_z = heightmap[x][y-1]
+			else: min_z = 0; break
+		
+		set_column(x, y, z, type, min_z)
 
-
-func set_column(x, y, z, type): 
-	var i = 0
+# TODO: switch this and set tile cus wth is this?!
+func set_column(x, y, z, type: String, start: int = 0): 
+	var i = start
 	while i <= z:
 		MAP_GRID.set_cell_item(Vector3(x, i, y), TILES[type], 0)
 		i += 1
@@ -176,8 +197,8 @@ func set_column(x, y, z, type):
 func set_path(x, y, type):
 	var i_min = -min(x, PATH_RADIUS)
 	var j_min = -min(y, PATH_RADIUS)
-	var i_max = min(CHUNK_SIZE*CHUNK_COUNT - x, PATH_RADIUS+1)
-	var j_max = min(CHUNK_SIZE*CHUNK_COUNT - y, PATH_RADIUS+1)
+	var i_max = min(EDGE_LENGTH - x, PATH_RADIUS+1)
+	var j_max = min(EDGE_LENGTH - y, PATH_RADIUS+1)
 
 	# that height CRAP
 	#var height = 0.0
@@ -238,6 +259,17 @@ func draw_filled_circle(center_x: int, center_y: int, type: String = PATH_TILE, 
 		draw_line(center_x - x, center_x + x, center_y - y, type, avg_height)
 		draw_line(center_x - y, center_x + y, center_y + x, type, avg_height)
 		draw_line(center_x - y, center_x + y, center_y - x, type, avg_height)
+		
+		if avg_height != -1:
+			if point_is_on_grid(Vector2(center_x + x + 1, center_y + y)) and heightmap[center_x + x + 1][center_y + y] > avg_height: set_column(center_x + x + 1, center_y + y, heightmap[center_x + x + 1][center_y + y], find_tile_at_point(Vector2(center_x + x + 1, center_y + y)),  avg_height)
+			if point_is_on_grid(Vector2(center_x - x - 1, center_y + y)) and heightmap[center_x - x - 1][center_y + y] > avg_height: set_column(center_x - x - 1, center_y + y, heightmap[center_x - x - 1][center_y + y], find_tile_at_point(Vector2(center_x - x - 1, center_y + y)), avg_height)
+			if point_is_on_grid(Vector2(center_x + x + 1, center_y - y)) and heightmap[center_x + x + 1][center_y - y] > avg_height: set_column(center_x + x + 1, center_y - y, heightmap[center_x + x + 1][center_y - y], find_tile_at_point(Vector2(center_x + x + 1, center_y - y)), avg_height)
+			if point_is_on_grid(Vector2(center_x - x - 1, center_y - y)) and heightmap[center_x - x - 1][center_y - y] > avg_height: set_column(center_x - x - 1, center_y - y, heightmap[center_x - x - 1][center_y - y], find_tile_at_point(Vector2(center_x - x - 1, center_y - y)), avg_height)
+			if point_is_on_grid(Vector2(center_x + y, center_y + x + 1)) and heightmap[center_x + y][center_y + x + 1] > avg_height: set_column(center_x + y, center_y + x + 1, heightmap[center_x + y][center_y + x + 1], find_tile_at_point(Vector2(center_x + y, center_y + x + 1)), avg_height)
+			if point_is_on_grid(Vector2(center_x - y, center_y + x + 1)) and heightmap[center_x - y][center_y + x + 1] > avg_height: set_column(center_x - y, center_y + x + 1, heightmap[center_x - y][center_y + x + 1], find_tile_at_point(Vector2(center_x - y, center_y + x + 1)), avg_height)
+			if point_is_on_grid(Vector2(center_x + y, center_y - x - 1)) and heightmap[center_x + y][center_y - x - 1] > avg_height: set_column(center_x + y, center_y - x - 1, heightmap[center_x + y][center_y - x - 1], find_tile_at_point(Vector2(center_x + y, center_y - x - 1)), avg_height)
+			if point_is_on_grid(Vector2(center_x - y, center_y - x - 1)) and heightmap[center_x - y][center_y - x - 1] > avg_height: set_column(center_x - y, center_y - x - 1, heightmap[center_x - y][center_y - x - 1], find_tile_at_point(Vector2(center_x - y, center_y - x - 1)), avg_height)
+		
 		y += 1
 		if error <= 0:
 			error += 2 * y + 1
@@ -250,12 +282,15 @@ func draw_line(x1, x2, y, type, ah):
 	for x in range(x1, x2 + 1):
 		if point_is_on_grid(Vector2(x,y)): 
 			if ah == -1: 
-				if type != "AIR": set_tile(x, y, heightmap[x][y], type)
+				if type != "AIR": set_tile(x, y, heightmap[x][y], type, true)
 				set_tile(x, y, heightmap[x][y]+1, "AIR", true)
 			else:
-				for i in range(ah+1,heightmap[x][y]+1):
+				for i in range(ah+1,heightmap[x][y]+2):
 					set_tile(x, y, i, "AIR", true)
 				set_tile(x, y, ah, type)
+	#if ah != -1: 
+		#if point_is_on_grid(Vector2(x1-1,y)): set_tile(x1-1, y, heightmap[x1-1][y]+2, "WHITE", true)
+		#if point_is_on_grid(Vector2(x2+1,y)): set_tile(x2+1, y, heightmap[x2+1][y]+2, "WHITE", true)
 
 
 
@@ -292,11 +327,12 @@ func generate_chunks(height_map: Array = [], show_chunks: bool = SHOW_CHUNKS):
 		for j in hm[i].size():
 			if show_chunks: set_column(i,j,hm[i][j],"WHITE" if (i/CHUNK_SIZE + j/CHUNK_SIZE)%2 == 0 else "BLACK")
 			else: 
-				var type =  "STONE" if hm[i][j] > 3*MAX_HEIGHT/4 else \
-							("STONE" if FOOL.range_i((5*MAX_HEIGHT/8),3*MAX_HEIGHT/4)<hm[i][j] else "GRASS") if hm[i][j] > 5*MAX_HEIGHT/8 else \
-							"GRASS" if hm[i][j] > MAX_HEIGHT/2 else \
-							"GRASS" if hm[i][j] > MAX_HEIGHT/4 else \
-							"WOOD"
+				var type = find_tile_from_height(hm[i][j])
+				#var type =  "STONE" if hm[i][j] > 3*MAX_HEIGHT/4 else \
+							#("STONE" if FOOL.range_i((5*MAX_HEIGHT/8),3*MAX_HEIGHT/4)<hm[i][j] else "GRASS") if hm[i][j] > 5*MAX_HEIGHT/8 else \
+							#"GRASS" if hm[i][j] > MAX_HEIGHT/2 else \
+							#"GRASS" if hm[i][j] > MAX_HEIGHT/4 else \
+							#"WOOD"
 				set_tile(i,j,hm[i][j],type)
 
 
@@ -319,11 +355,11 @@ func generate_POIs(locations: Dictionary):
 		if coords:
 			print("found suitable spot for ",loc, ". placing")
 			# this abominable one-liner will generate the ground disk out of the extant ground tile at that point
-			if not ground: 
-				for tile in TILES.keys(): 
-					if TILES[tile] == MAP_GRID.get_cell_item(Vector3(coords.x,heightmap[coords.x][coords.z],coords.z)): 
-						ground = tile
-						break
+			if not ground: ground = find_tile_at_point(Vector2(coords.x,coords.z))
+				#for tile in TILES.keys(): 
+					#if TILES[tile] == MAP_GRID.get_cell_item(Vector3(coords.x,heightmap[coords.x][coords.z],coords.z)): 
+						#ground = tile
+						#break
 			draw_filled_circle(coords.x, coords.z, ground, int(size/WORLD_SCALE.x), coords.y)
 			print(loc, " placed")
 			points_of_interest.push_back([loc,(coords + Vector3(0,1,0))*WORLD_SCALE,scene])
@@ -386,7 +422,7 @@ func find_flat_spawn_location(size: int, spawn_attempts: int, poi_spacing: float
 	var valid_points: Array
 	
 	for i in spawn_attempts:
-		var spawn_point := Vector2(FOOL.range_i(0, CHUNK_SIZE*CHUNK_COUNT-1),FOOL.range_i(0, CHUNK_SIZE*CHUNK_COUNT-1))
+		var spawn_point := Vector2(FOOL.range_i(0, EDGE_LENGTH-1),FOOL.range_i(0, EDGE_LENGTH-1))
 		if not point_is_near_path(spawn_point, road_spacing): valid_points.push_back([spawn_point, height_avg_and_dev(spawn_point,size)])
 																					#[Vector2,     [height, dev, counted_tiles]]
 	
@@ -521,8 +557,8 @@ func extend_curve(chunk_coords, curve_data, dir, path):
 	else: 
 		var midpoint_dist = FOOL.range_f(CHUNK_SIZE/4, CHUNK_SIZE)
 		mid_vector = (mid_vector.normalized() * midpoint_dist) + block_coords
-		x1 = int(min(max(mid_vector.x, 0), CHUNK_SIZE*CHUNK_COUNT-1))
-		y1 = int(min(max(mid_vector.y, 0), CHUNK_SIZE*CHUNK_COUNT-1))
+		x1 = int(min(max(mid_vector.x, 0), EDGE_LENGTH-1))
+		y1 = int(min(max(mid_vector.y, 0), EDGE_LENGTH-1))
 	
 	x2 = ((abs(dir.x)*((1+dir.x)/2)*(CHUNK_SIZE-1)))+((1-abs(dir.x))*rand) + offset.x
 	y2 = ((abs(dir.y)*((1+dir.y)/2)*(CHUNK_SIZE-1)))+((1-abs(dir.y))*rand) + offset.y

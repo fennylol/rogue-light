@@ -1,0 +1,38 @@
+[gd_scene load_steps=5 format=3 uid="uid://cbxr2nmcb3whv"]
+
+[ext_resource type="Script" path="res://points_of_interest/camp/tent.gd" id="1_v17bu"]
+[ext_resource type="PackedScene" uid="uid://l64t1hqjww8u" path="res://points_of_interest/camp/tent.glb" id="1_vvu0d"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_5r14q"]
+radius = 0.4
+height = 4.0
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_uglr2"]
+size = Vector3(2, 1, 1)
+
+[node name="Tent" type="Node3D"]
+script = ExtResource("1_v17bu")
+
+[node name="tent" parent="." instance=ExtResource("1_vvu0d")]
+transform = Transform3D(-5.46392e-08, 0, 1.25, 0, 1.25, 0, -1.25, 0, -5.46392e-08, 0, 0, 0)
+
+[node name="StaticBody3D3" type="StaticBody3D" parent="tent" groups=["slick"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="tent/StaticBody3D3"]
+transform = Transform3D(-4.37114e-08, 1, -4.37114e-08, -1, -4.37114e-08, -4.37114e-08, -4.37114e-08, 4.37114e-08, 1, 0, 0, 0)
+shape = SubResource("CapsuleShape3D_5r14q")
+
+[node name="StaticBody3D4" type="StaticBody3D" parent="tent" groups=["slick"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -1)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="tent/StaticBody3D4"]
+transform = Transform3D(-4.37114e-08, 1, -4.37114e-08, -1, -4.37114e-08, -4.37114e-08, -4.37114e-08, 4.37114e-08, 1, 0, 0, 0)
+shape = SubResource("CapsuleShape3D_5r14q")
+
+[node name="Area3D" type="Area3D" parent="tent"]
+transform = Transform3D(1, 0, 3.55271e-15, 0, 1, 0, -3.55271e-15, 0, 1, 0, 1, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="tent/Area3D"]
+transform = Transform3D(1, 0, -3.55271e-15, 0, 1, 0, 3.55271e-15, 0, 1, 0, 0, 0)
+shape = SubResource("BoxShape3D_uglr2")
