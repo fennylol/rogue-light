@@ -6,20 +6,22 @@ extends Control
 enum {AM, PM}
 enum {HOUR, MINUTE, PERIOD, DAY}
 
-@onready var left_container = $left as VBoxContainer
+@onready var left_container = $top/left as VBoxContainer
 @onready var input_zone = $command_zone/input_zone as TextEdit
 @onready var command_zone = $command_zone as VBoxContainer
 @onready var output = $output_zone as RichTextLabel
 
-@onready var stam_bar = $bars/stam/stam_bar as TextureProgressBar
-@onready var stam_loss_bar = $bars/stam/stam_loss_bar as TextureProgressBar
+@onready var minimap = $top/minimap as TextureRect
+
+@onready var stam_bar = $bottom/stam/stam_bar as TextureProgressBar
+@onready var stam_loss_bar = $bottom/stam/stam_loss_bar as TextureProgressBar
 var last_stam: float = 0
-@onready var health_bar = $bars/health/health_bar as TextureProgressBar
-@onready var health_loss_bar = $bars/health/health_loss_bar as TextureProgressBar
+@onready var health_bar = $bottom/health/health_bar as TextureProgressBar
+@onready var health_loss_bar = $bottom/health/health_loss_bar as TextureProgressBar
 var last_health: float = 0
 
-@onready var clock_display = $left/dials/clock/clock_progress as TextureRect
-@onready var compass_face = $left/dials/compass/compass_progress as TextureRect
+@onready var clock_display = $top/left/dials/clock/clock_progress as TextureRect
+@onready var compass_face = $top/left/dials/compass/compass_progress as TextureRect
 var target_rotation: float = 0.0
 var angular_velocity: float = 0.0
 
@@ -49,6 +51,16 @@ func _process(delta):
 	last_health = health_bar.value
 
 func _physics_process(delta): update_compass_display(delta)
+
+func set_health(amount: float): health_bar.value = amount
+func set_stam(amount: float): stam_bar.value = amount
+func set_bar_max(health_max:float, stam_max: float):
+	health_bar.max_value = health_max
+	stam_bar.max_value = stam_max
+	stam_loss_bar.max_value = stam_max
+func get_bar_max()->Vector2: return Vector2(health_bar.max_value,stam_bar.max_value)
+
+func set_minimap(map: ImageTexture): minimap.texture = map
 
 func recieve_message(message: Dictionary):
 	if message.has("error"): prepend_output_text(message)
@@ -92,14 +104,6 @@ func update_compass_display(delta):
 func rotate_compass(rot: float): target_rotation += rot
 
 func prepend_output_text(message): output.text += "- "+str(message)+"\n\n"#+output.text
-
-func set_health(amount: float): health_bar.value = amount
-func set_stam(amount: float): stam_bar.value = amount
-func set_bar_max(health_max:float, stam_max: float):
-	health_bar.max_value = health_max
-	stam_bar.max_value = stam_max
-	stam_loss_bar.max_value = stam_max
-func get_bar_max()->Vector2: return Vector2(health_bar.max_value,stam_bar.max_value)
 
 func command_window():
 	if not command_zone.visible:

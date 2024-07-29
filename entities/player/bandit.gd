@@ -101,7 +101,7 @@ func _physics_process(delta):
 
 func get_spawn_point() -> Vector3: return SPAWN_POINT
 func set_spawn_point(sp: Vector3 = Vector3.ZERO): SPAWN_POINT = sp
-
+func set_minimap(map: ImageTexture): GUI.set_minimap(map)
 
 func take_damage(amount: int = 6):
 	health = max(min(health-amount,MAX_HEALTH),0)

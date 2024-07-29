@@ -35,42 +35,48 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_jfud4")
 
-[node name="left" type="VBoxContainer" parent="."]
+[node name="top" type="HBoxContainer" parent="."]
 layout_mode = 1
-anchors_preset = 11
-anchor_left = 1.0
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -300.0
-grow_horizontal = 0
-grow_vertical = 2
+grow_horizontal = 2
 
-[node name="dials" type="HBoxContainer" parent="left"]
+[node name="minimap" type="TextureRect" parent="top"]
+layout_mode = 2
+
+[node name="spacer" type="Control" parent="top"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="left" type="VBoxContainer" parent="top"]
+layout_mode = 2
+
+[node name="dials" type="HBoxContainer" parent="top/left"]
 layout_mode = 2
 alignment = 1
 
-[node name="compass" type="Control" parent="left/dials"]
+[node name="compass" type="Control" parent="top/left/dials"]
 custom_minimum_size = Vector2(128, 0)
 layout_mode = 2
 
-[node name="compass_progress" type="TextureRect" parent="left/dials/compass"]
+[node name="compass_progress" type="TextureRect" parent="top/left/dials/compass"]
 layout_mode = 1
 offset_right = 128.0
 offset_bottom = 128.0
 pivot_offset = Vector2(64, 64)
 texture = ExtResource("2_qwkvw")
 
-[node name="compass_front" type="TextureRect" parent="left/dials/compass"]
+[node name="compass_front" type="TextureRect" parent="top/left/dials/compass"]
 layout_mode = 1
 offset_right = 128.0
 offset_bottom = 128.0
 texture = ExtResource("3_dwx3c")
 
-[node name="clock" type="Control" parent="left/dials"]
+[node name="clock" type="Control" parent="top/left/dials"]
 custom_minimum_size = Vector2(128, 128)
 layout_mode = 2
 
-[node name="clock_progress" type="TextureRect" parent="left/dials/clock"]
+[node name="clock_progress" type="TextureRect" parent="top/left/dials/clock"]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -81,7 +87,7 @@ grow_horizontal = 0
 pivot_offset = Vector2(64, 64)
 texture = ExtResource("2_qw2o7")
 
-[node name="clock_front" type="TextureRect" parent="left/dials/clock"]
+[node name="clock_front" type="TextureRect" parent="top/left/dials/clock"]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -91,20 +97,20 @@ offset_bottom = 128.0
 grow_horizontal = 0
 texture = ExtResource("3_fdxp3")
 
-[node name="time_display" type="Label" parent="left"]
+[node name="time_display" type="Label" parent="top/left"]
 layout_mode = 2
 text = "12:00 AM"
 label_settings = SubResource("LabelSettings_jmy53")
 horizontal_alignment = 2
 uppercase = true
 
-[node name="day_display" type="Label" parent="left"]
+[node name="day_display" type="Label" parent="top/left"]
 layout_mode = 2
 text = "day: 0"
 label_settings = SubResource("LabelSettings_njrln")
 horizontal_alignment = 2
 
-[node name="spacer" type="Control" parent="left"]
+[node name="spacer" type="Control" parent="top/left"]
 layout_mode = 2
 size_flags_vertical = 3
 
@@ -140,7 +146,7 @@ layout_mode = 2
 layout_mode = 2
 texture = ExtResource("5_rsew7")
 
-[node name="bars" type="HBoxContainer" parent="."]
+[node name="bottom" type="HBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -150,11 +156,11 @@ offset_top = -64.0
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="stam" type="CenterContainer" parent="bars"]
+[node name="stam" type="CenterContainer" parent="bottom"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="stam_loss_bar" type="TextureProgressBar" parent="bars/stam"]
+[node name="stam_loss_bar" type="TextureProgressBar" parent="bottom/stam"]
 layout_mode = 2
 size_flags_horizontal = 3
 step = 0.001
@@ -162,7 +168,7 @@ value = 100.0
 texture_under = ExtResource("9_omcn7")
 texture_progress = ExtResource("10_x5hrk")
 
-[node name="stam_bar" type="TextureProgressBar" parent="bars/stam"]
+[node name="stam_bar" type="TextureProgressBar" parent="bottom/stam"]
 layout_mode = 2
 size_flags_horizontal = 3
 step = 0.001
@@ -170,15 +176,15 @@ value = 100.0
 texture_over = ExtResource("10_rqhut")
 texture_progress = ExtResource("11_or427")
 
-[node name="spacer" type="Control" parent="bars"]
+[node name="spacer" type="Control" parent="bottom"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="health" type="CenterContainer" parent="bars"]
+[node name="health" type="CenterContainer" parent="bottom"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="health_loss_bar" type="TextureProgressBar" parent="bars/health"]
+[node name="health_loss_bar" type="TextureProgressBar" parent="bottom/health"]
 layout_mode = 2
 size_flags_horizontal = 3
 step = 0.001
@@ -186,7 +192,7 @@ value = 100.0
 texture_under = ExtResource("9_omcn7")
 texture_progress = ExtResource("13_ipllf")
 
-[node name="health_bar" type="TextureProgressBar" parent="bars/health"]
+[node name="health_bar" type="TextureProgressBar" parent="bottom/health"]
 layout_mode = 2
 size_flags_horizontal = 3
 step = 0.001

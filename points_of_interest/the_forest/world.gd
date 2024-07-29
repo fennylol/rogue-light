@@ -15,6 +15,7 @@ var DUKE = TheDuke
 var ARCHIVIST = TheArchivist
 var FOOL = TheFool
 const MasterOfWorks = preload("res://noblemen/themasterofworks.gd")
+const Cartographer = preload("res://noblemen/thecartographer.gd")
 var Caravan = preload("res://entities/caravan/caravan.gd")
 @onready var PLAYER = $Bandit as CharacterBody3D
 @onready var CAMERA = $camera_man as Node3D
@@ -27,12 +28,13 @@ var Caravan = preload("res://entities/caravan/caravan.gd")
 
 ### WORLD GEN PARAMETERS ###
 const CHUNK_SIZE: int = 32
-const CHUNK_COUNT: int = 16
+const CHUNK_COUNT: int = 8
 const MAX_HEIGHT: int = 255
 const PATH_RADIUS: int = 3 #dist past the centerline on either side. path will be 2r+1 tiles wide
 const PATH_TILE: String = "PATH"
 const DEBUG_MODE: bool = false
 var MASTER_OF_WORKS := MasterOfWorks.new()
+var CARTOGRAPHER := Cartographer.new()
 const KILL_HEIGHT = -10
 
 ### CAMERA PARAMETERS ###
@@ -167,6 +169,7 @@ func generate_map(r: bool = true, s: bool = true):
 				PLAYER.set_spawn_point(scene.get_tent_position())#poi[MASTER_OF_WORKS.COORDS]
 				move_player(r, s, MASTER_OF_WORKS.get_world_scale(), PLAYER.get_spawn_point())
 		print("map generation complete")
+		PLAYER.set_minimap(CARTOGRAPHER.make_minimap(MAP_GRID, MASTER_OF_WORKS.get_heightmap()))
 	
 	MASTER_OF_WORKS = MasterOfWorks.new(CHUNK_SIZE, CHUNK_COUNT, MAX_HEIGHT, PATH_RADIUS, PATH_TILE, DEBUG_MODE)
 	MASTER_OF_WORKS.finished.connect(on_map_generation_finished)
@@ -184,6 +187,7 @@ func move_player(r: bool = true, s: bool = true, world_scale := Vector3(1,1,1), 
 
 
 func move_camera(delta):
+	# position
 	var diff_x = abs(CAMERA.position.x - PLAYER.position.x)
 	var lerp_speed_x = ((diff_x/(CAMERA.get_child(0).size/4))**2.0)*delta
 	CAMERA.position.x = lerpf(CAMERA.position.x, PLAYER.position.x, lerp_speed_x)  
@@ -191,33 +195,34 @@ func move_camera(delta):
 	var diff_y = abs(CAMERA.position.y - PLAYER.position.y)
 	var lerp_speed_y = (diff_y**2.0)*delta
 	CAMERA.position.y = lerpf(CAMERA.position.y, PLAYER.position.y, lerp_speed_y)
-	
+	0
 	var diff_z = abs(CAMERA.position.z - PLAYER.position.z)
 	var lerp_speed_z = ((diff_z/(CAMERA.get_child(0).size/4))**2.0)*delta
 	CAMERA.position.z = lerpf(CAMERA.position.z, PLAYER.position.z, lerp_speed_z)
 	
+	# rotation
 	if Input.is_action_just_released("move_cam"): 
 		Input.warp_mouse(mouse_pos) 
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
 	elif Input.is_action_just_pressed("move_cam"):
 		mouse_pos = get_viewport().get_mouse_position()
 		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
-		#var pos =
-		#if pos.x + 1 >= get_viewport().size.x: Input.warp_mouse(Vector2(1,pos.y))
-		#elif pos.x <= 0: Input.warp_mouse(Vector2(get_viewport().size.x,pos.y-1))
-		#
-		#if pos.y + 1 >= get_viewport().size.y: Input.warp_mouse(Vector2(pos.x,1))
-		#elif pos.y <= 0: Input.warp_mouse(Vector2(pos.x,get_viewport().size.y-1))
 	
+	CAMERA.rotation.y = lerp(CAMERA.rotation.y, target_rotation, 0.1)
+	CAMERA.rotation.x = lerp(CAMERA.rotation.x, target_pitch, 0.1)
+	
+	# scale 
 	var scroll: int = 2*int(Input.is_action_just_released("scroll_down")) - int(Input.is_action_just_released("scroll_up"))
 	target_size = min(max(target_size+scroll, MIN_CAM_SIZE), MAX_CAM_SIZE)
 	
 	if CAMERA.get_child(0).get_projection() == Camera3D.PROJECTION_ORTHOGONAL:
 		CAMERA.get_child(0).size = lerp(CAMERA.get_child(0).size, target_size, 0.1)
+		#if scroll > 0 and target_size != MAX_CAM_SIZE:
+			#CAMERA.get_child(0).position *= 1.2 
+		#elif scroll < 0 and target_size != MIN_CAM_SIZE:
+			#CAMERA.get_child(0).position /= 1.2
 	
-	CAMERA.rotation.y = lerp(CAMERA.rotation.y, target_rotation, 0.1)
-	CAMERA.rotation.x = lerp(CAMERA.rotation.x, target_pitch, 0.1)
-	
+	# resets 
 	if Input.is_action_pressed("DEV"):
 		if Input.is_action_pressed("look_up") and Input.is_action_pressed("look_down"): reset_camera(false, true)
 		if Input.is_action_pressed("look_left") and Input.is_action_pressed("look_right"): reset_camera(true, false)

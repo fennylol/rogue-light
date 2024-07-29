@@ -1,6 +1,28 @@
 extends Node
 
-enum TILE_NAMES {GRASS, STONE, WOOD, PATH, WATER, SNOW, TALL_PINE, WHITE, BLACK, AIR = -1}
+enum TILE_NAMES {
+	AIR = -1,
+	GRASS = 0, 
+	STONE = 1, 
+	WOOD = 2, 
+	PATH = 3, 
+	WATER = 4, 
+	SNOW = 5, 
+	TALL_PINE = 6, 
+	WHITE = 7, 
+	BLACK = 8, 
+	}
+const TILE_COLORS: Array[Color] = [
+	Color(160,195,104,255), #GRASS
+	Color(133,134,177,255), #STONE
+	Color(148,114,106,255), #WOOD
+	Color(188,185,99,255), #PATH
+	Color(60,212,255,255), #WATER
+	Color(160,188,244,255), #SNOW
+	Color(0,0,0,255), #TALL_PINE
+	Color(255,255,255,255), #WHITE
+	Color(0,0,0,255), #BLACK
+	] 
 
 enum period {AM, PM}
 enum time {HOUR, MINUTE, PERIOD, DAY}
