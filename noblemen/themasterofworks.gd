@@ -47,12 +47,12 @@ var EDGE_LENGTH: int
 var MAX_HEIGHT: int
 var heightmap: Array
 var MAP_GRID := GridMap.new()
-#const WORLD_SCALE = Vector3(1,1,1)
-#const MESH_LIB = preload("res://points_of_interest/the_forest/1m_tiles.tres")
+const WORLD_SCALE = Vector3(1,1,1)
+const MESH_LIB = preload("res://points_of_interest/the_forest/1m_tiles.tres")
 #const WORLD_SCALE = Vector3(1,.5,1)
 #const MESH_LIB = preload("res://points_of_interest/the_forest/1m_tiles_half_height.tres")
-const WORLD_SCALE = Vector3(.5,.25,.5)
-const MESH_LIB = preload("res://points_of_interest/the_forest/halfm_tiles.tres")
+#const WORLD_SCALE = Vector3(.5,.25,.5)
+#const MESH_LIB = preload("res://points_of_interest/the_forest/halfm_tiles.tres")
 
 # ROAD
 var PATH_RADIUS: int

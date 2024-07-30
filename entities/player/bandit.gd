@@ -7,7 +7,7 @@ extends CharacterBody3D
 var PAUSED = false
 const SPEED: float = 7.50
 const SPRINT_MULTI: float = 2
-const JUMP_VELOCITY: float = 9.8 * 2/3 #<- for use with half or quarter height tiles
+const JUMP_VELOCITY: float = 9.8 #* 2/3 #<- for use with half or quarter height tiles
 const ROTATION_SPEED: float = 7
 const SMOOTH_SPEED: float = 2.0
 
@@ -101,7 +101,7 @@ func _physics_process(delta):
 
 func get_spawn_point() -> Vector3: return SPAWN_POINT
 func set_spawn_point(sp: Vector3 = Vector3.ZERO): SPAWN_POINT = sp
-func set_minimap(map: ImageTexture): GUI.set_minimap(map)
+func set_full_minimap(map: Image): GUI.set_full_minimap(map)
 
 func take_damage(amount: int = 6):
 	health = max(min(health-amount,MAX_HEALTH),0)
@@ -136,4 +136,4 @@ func recieve_orders(orders: Dictionary):
 		elif options.has("take"): get_tired(int(options.take[0]))
 	
 	if orders.command_name == "health": COMMAND_health.call(orders.options)
-	elif orders.command_name == "stam": COMMAND_health.call(orders.options)
+	elif orders.command_name == "stam": COMMAND_stam.call(orders.options)

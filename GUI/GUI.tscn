@@ -43,6 +43,7 @@ grow_horizontal = 2
 
 [node name="minimap" type="TextureRect" parent="top"]
 layout_mode = 2
+expand_mode = 2
 
 [node name="spacer" type="Control" parent="top"]
 layout_mode = 2

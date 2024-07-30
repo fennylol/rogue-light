@@ -169,7 +169,7 @@ func generate_map(r: bool = true, s: bool = true):
 				PLAYER.set_spawn_point(scene.get_tent_position())#poi[MASTER_OF_WORKS.COORDS]
 				move_player(r, s, MASTER_OF_WORKS.get_world_scale(), PLAYER.get_spawn_point())
 		print("map generation complete")
-		PLAYER.set_minimap(CARTOGRAPHER.make_minimap(MAP_GRID, MASTER_OF_WORKS.get_heightmap()))
+		PLAYER.set_full_minimap(CARTOGRAPHER.make_minimap(MAP_GRID, Vector3(CHUNK_COUNT*CHUNK_SIZE,MAX_HEIGHT,CHUNK_COUNT*CHUNK_SIZE)))
 	
 	MASTER_OF_WORKS = MasterOfWorks.new(CHUNK_SIZE, CHUNK_COUNT, MAX_HEIGHT, PATH_RADIUS, PATH_TILE, DEBUG_MODE)
 	MASTER_OF_WORKS.finished.connect(on_map_generation_finished)
@@ -195,7 +195,7 @@ func move_camera(delta):
 	var diff_y = abs(CAMERA.position.y - PLAYER.position.y)
 	var lerp_speed_y = (diff_y**2.0)*delta
 	CAMERA.position.y = lerpf(CAMERA.position.y, PLAYER.position.y, lerp_speed_y)
-	0
+	
 	var diff_z = abs(CAMERA.position.z - PLAYER.position.z)
 	var lerp_speed_z = ((diff_z/(CAMERA.get_child(0).size/4))**2.0)*delta
 	CAMERA.position.z = lerpf(CAMERA.position.z, PLAYER.position.z, lerp_speed_z)

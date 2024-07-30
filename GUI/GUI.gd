@@ -12,6 +12,9 @@ enum {HOUR, MINUTE, PERIOD, DAY}
 @onready var output = $output_zone as RichTextLabel
 
 @onready var minimap = $top/minimap as TextureRect
+@export var minimap_range = 65 as int
+var maximap: Image
+var last_player_pos := Vector3i.ZERO
 
 @onready var stam_bar = $bottom/stam/stam_bar as TextureProgressBar
 @onready var stam_loss_bar = $bottom/stam/stam_loss_bar as TextureProgressBar
@@ -37,6 +40,7 @@ func _ready():
 
 func _process(delta): 
 	command_window()
+	update_minimap_display()
 	
 	if last_stam > stam_bar.value: pass
 	elif stam_loss_bar.value > stam_bar.value:
@@ -60,7 +64,11 @@ func set_bar_max(health_max:float, stam_max: float):
 	stam_loss_bar.max_value = stam_max
 func get_bar_max()->Vector2: return Vector2(health_bar.max_value,stam_bar.max_value)
 
-func set_minimap(map: ImageTexture): minimap.texture = map
+func set_full_minimap(map: Image): 
+	maximap = map
+	#minimap_material = ShaderMaterial.new()
+	#minimap_material.shader = load("res://GUI/map/minimap.gdshader")
+	#minimap.material = minimap_material
 
 func recieve_message(message: Dictionary):
 	if message.has("error"): prepend_output_text(message)
@@ -76,7 +84,7 @@ func update_time_display(TIME: Vector4i):
 	var hour = str(TIME[HOUR] if TIME[HOUR] else 12)  
 	var minute = str(TIME[MINUTE]).pad_zeros(2)
 	var period = "PM" if TIME[PERIOD] else "AM" 
-	left_container.find_child("time_display") .text = hour + ":" + minute + " " + period
+	left_container.find_child("time_display").text = hour + ":" + minute + " " + period
 	left_container.find_child("day_display").text = "day: " + str(TIME[DAY]) 
 	
 	hour = 12 - TIME[HOUR] + TIME[PERIOD]*12 
@@ -99,9 +107,32 @@ func update_compass_display(delta):
 		compass_face.rotation = target_rotation
 		angular_velocity = 0.0
 
+func update_minimap_display():
+	var player_pos := Vector3i(get_parent().get_global_position())
+	
+	if player_pos != last_player_pos:
+		last_player_pos = player_pos
+		var rect_pos := Vector2i(min(max(player_pos.x - minimap_range, 0),maximap.get_size().x), max(player_pos.z - minimap_range,0)) 
+		var rect_size := Vector2i(2*minimap_range,2*minimap_range)
+		
+		var subset_rect := Rect2i(rect_pos,rect_size)
+		var subset_img: Image = maximap.get_region(subset_rect)
+		
+		for x in rect_size.x:
+			for y in rect_size.y:
+				var pixel_pos = Vector2(x, y)
+				var distance = pixel_pos.distance_to(Vector2(minimap_range, minimap_range))
+				if distance > minimap_range: subset_img.set_pixel(x,y, Color(0,0,0,0))#subset_img.get_pixel(minimap_range,minimap_range))
+		subset_img.set_pixel(minimap_range,minimap_range, Color.WHITE)#subset_img.get_pixel(minimap_range,minimap_range))
+		
+		var new_minimap := ImageTexture.create_from_image(subset_img)
+		minimap.texture = new_minimap
+		minimap.pivot_offset = Vector2i(minimap.size.x/2,minimap.size.y/2)
 
 
-func rotate_compass(rot: float): target_rotation += rot
+func rotate_compass(rot: float): 
+	target_rotation += rot
+	minimap.rotation = target_rotation
 
 func prepend_output_text(message): output.text += "- "+str(message)+"\n\n"#+output.text
 
