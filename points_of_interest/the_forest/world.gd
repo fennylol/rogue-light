@@ -27,8 +27,8 @@ var Caravan = preload("res://entities/caravan/caravan.gd")
 
 
 ### WORLD GEN PARAMETERS ###
-const CHUNK_SIZE: int = 32
-const CHUNK_COUNT: int = 8
+const CHUNK_SIZE: int = 64
+const CHUNK_COUNT: int = 16
 const MAX_HEIGHT: int = 255
 const PATH_RADIUS: int = 3 #dist past the centerline on either side. path will be 2r+1 tiles wide
 const PATH_TILE: String = "PATH"
@@ -151,15 +151,21 @@ func send_shipment():
 
 func generate_map(r: bool = true, s: bool = true):
 	if WORLD.get_node_or_null("road_path"): WORLD.get_node("road_path").queue_free()
-	var on_map_generation_finished = func():	
+	var on_map_generation_finished = func():
+		# place player and new map node
 		move_player(r,s, MASTER_OF_WORKS.get_world_scale())
 		MAP_GRID.queue_free()
 		for i in POINTS_OF_INTEREST.get_child_count(): POINTS_OF_INTEREST.get_child(i).queue_free()
 		MAP_GRID = MASTER_OF_WORKS.get_map_grid()
-		WORLD.add_child(MAP_GRID)
+		#WORLD.add_child(MAP_GRID)
+		#MAP_GRID = Node3D.new()
+		#var meshes = MASTER_OF_WORKS.get_map_grid().make_baked_meshes()
+		#for mesh_instance in meshes:
+			#MAP_GRID.add_child(mesh_instance)
+		#WORLD.add_child(MAP_GRID)
 		
+		#place poi scenes on their spots
 		for poi in MASTER_OF_WORKS.get_points_of_interest():
-			print("generating: ", poi[MASTER_OF_WORKS.NAME])
 			var scene = load(poi[MASTER_OF_WORKS.SCENE]).instantiate()
 			POINTS_OF_INTEREST.add_child(scene)
 			scene.position = poi[MASTER_OF_WORKS.COORDS]
@@ -168,8 +174,13 @@ func generate_map(r: bool = true, s: bool = true):
 			if poi[MASTER_OF_WORKS.NAME] == "camp": 
 				PLAYER.set_spawn_point(scene.get_tent_position())#poi[MASTER_OF_WORKS.COORDS]
 				move_player(r, s, MASTER_OF_WORKS.get_world_scale(), PLAYER.get_spawn_point())
-		print("map generation complete")
-		PLAYER.set_full_minimap(CARTOGRAPHER.make_minimap(MAP_GRID, Vector3(CHUNK_COUNT*CHUNK_SIZE,MAX_HEIGHT,CHUNK_COUNT*CHUNK_SIZE)))
+		
+		# generate and pass minimap
+		PLAYER.set_full_minimap(CARTOGRAPHER.make_minimap(MAP_GRID, Vector3(CHUNK_COUNT*CHUNK_SIZE,MAX_HEIGHT,CHUNK_COUNT*CHUNK_SIZE)), MASTER_OF_WORKS.get_world_scale())
+		
+		#multimesh tomfoolery
+		var mm = MASTER_OF_WORKS.create_multimeshs()
+		WORLD.add_child(mm)
 	
 	MASTER_OF_WORKS = MasterOfWorks.new(CHUNK_SIZE, CHUNK_COUNT, MAX_HEIGHT, PATH_RADIUS, PATH_TILE, DEBUG_MODE)
 	MASTER_OF_WORKS.finished.connect(on_map_generation_finished)
@@ -202,21 +213,21 @@ func move_camera(delta):
 	
 	# rotation
 	if Input.is_action_just_released("move_cam"): 
-		Input.warp_mouse(mouse_pos) 
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		Input.warp_mouse(mouse_pos) 
 	elif Input.is_action_just_pressed("move_cam"):
 		mouse_pos = get_viewport().get_mouse_position()
-		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+		Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 	
-	CAMERA.rotation.y = lerp(CAMERA.rotation.y, target_rotation, 0.1)
-	CAMERA.rotation.x = lerp(CAMERA.rotation.x, target_pitch, 0.1)
+	CAMERA.rotation.y = lerp(CAMERA.rotation.y, target_rotation, 7.5*delta)
+	CAMERA.rotation.x = lerp(CAMERA.rotation.x, target_pitch, 7.5*delta)
 	
 	# scale 
 	var scroll: int = 2*int(Input.is_action_just_released("scroll_down")) - int(Input.is_action_just_released("scroll_up"))
 	target_size = min(max(target_size+scroll, MIN_CAM_SIZE), MAX_CAM_SIZE)
 	
 	if CAMERA.get_child(0).get_projection() == Camera3D.PROJECTION_ORTHOGONAL:
-		CAMERA.get_child(0).size = lerp(CAMERA.get_child(0).size, target_size, 0.1)
+		CAMERA.get_child(0).size = lerp(CAMERA.get_child(0).size, target_size, 7.5*delta)
 		#if scroll > 0 and target_size != MAX_CAM_SIZE:
 			#CAMERA.get_child(0).position *= 1.2 
 		#elif scroll < 0 and target_size != MIN_CAM_SIZE:

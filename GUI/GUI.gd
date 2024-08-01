@@ -12,7 +12,8 @@ enum {HOUR, MINUTE, PERIOD, DAY}
 @onready var output = $output_zone as RichTextLabel
 
 @onready var minimap = $top/minimap as TextureRect
-@export var minimap_range = 65 as int
+var minimap_range = 65 as int
+var world_scale: Vector3
 var maximap: Image
 var last_player_pos := Vector3i.ZERO
 
@@ -64,11 +65,12 @@ func set_bar_max(health_max:float, stam_max: float):
 	stam_loss_bar.max_value = stam_max
 func get_bar_max()->Vector2: return Vector2(health_bar.max_value,stam_bar.max_value)
 
-func set_full_minimap(map: Image): 
+func set_full_minimap(map: Image, ws: Vector3): 
 	maximap = map
-	#minimap_material = ShaderMaterial.new()
-	#minimap_material.shader = load("res://GUI/map/minimap.gdshader")
-	#minimap.material = minimap_material
+	world_scale = ws
+	var subset_rect := Rect2i(Vector2i.ZERO,Vector2i(2*(minimap_range),2*minimap_range))
+	minimap.texture = ImageTexture.create_from_image(maximap.get_region(subset_rect))
+
 
 func recieve_message(message: Dictionary):
 	if message.has("error"): prepend_output_text(message)
@@ -90,7 +92,7 @@ func update_time_display(TIME: Vector4i):
 	hour = 12 - TIME[HOUR] + TIME[PERIOD]*12 
 	minute = TIME[MINUTE]
 	clock_display.rotation_degrees = hour*(360/24) - minute*(15.0/60.0)
-
+	
 
 func update_compass_display(delta):
 	var damping_factor = 0.975
@@ -108,31 +110,71 @@ func update_compass_display(delta):
 		angular_velocity = 0.0
 
 func update_minimap_display():
-	var player_pos := Vector3i(get_parent().get_global_position())
-	
+	minimap.rotation = lerp(minimap.rotation, target_rotation, 7.5*get_process_delta_time())
+	var player_pos := Vector3i(get_parent().get_global_position()/world_scale)
 	if player_pos != last_player_pos:
 		last_player_pos = player_pos
-		var rect_pos := Vector2i(min(max(player_pos.x - minimap_range, 0),maximap.get_size().x), max(player_pos.z - minimap_range,0)) 
-		var rect_size := Vector2i(2*minimap_range,2*minimap_range)
 		
-		var subset_rect := Rect2i(rect_pos,rect_size)
-		var subset_img: Image = maximap.get_region(subset_rect)
+		var clear_color := Color(0,0,0,0)
+		var base_color := Color(0,0,0,0.5)
+		var minimap_border_color := Color.DARK_GOLDENROD
+		var player_color := Color.AQUA
+		var player_border_color := Color.WEB_GRAY
 		
+		var minimap_boarder_thickness: int = 3
+		var player_icon_size: int = 2
+
+		var rect_pos := Vector2i(player_pos.x - minimap_range, player_pos.z - minimap_range) 
+		var rect_size := Vector2i(2*(minimap_range),2*minimap_range)
+		
+		#var subset_rect := Rect2i(rect_pos,rect_size)
+		var subset_img := Image.create(rect_size.x, rect_size.y, false, Image.FORMAT_RGBA8)
 		for x in rect_size.x:
 			for y in rect_size.y:
 				var pixel_pos = Vector2(x, y)
 				var distance = pixel_pos.distance_to(Vector2(minimap_range, minimap_range))
-				if distance > minimap_range: subset_img.set_pixel(x,y, Color(0,0,0,0))#subset_img.get_pixel(minimap_range,minimap_range))
-		subset_img.set_pixel(minimap_range,minimap_range, Color.WHITE)#subset_img.get_pixel(minimap_range,minimap_range))
+				var c: Color = base_color
+
+				
+				if distance < player_icon_size: c = player_color
+				elif distance < player_icon_size+1: c = player_border_color
+				elif distance > minimap_range-minimap_boarder_thickness and distance < minimap_range: c = minimap_border_color
+				elif distance < minimap_range: 
+					if x+rect_pos.x < maximap.get_size().x and y+rect_pos.y < maximap.get_size().y and x+rect_pos.x >= 0 and y+rect_pos.y >= 0:
+						c = maximap.get_pixel(x+rect_pos.x,y+rect_pos.y)
+				else: c = clear_color
+				subset_img.set_pixel(x,y,c)
 		
-		var new_minimap := ImageTexture.create_from_image(subset_img)
-		minimap.texture = new_minimap
+		minimap.texture.update(subset_img) 
+		minimap.pivot_offset = Vector2i((minimap.size.x+minimap_boarder_thickness)/2,(minimap.size.y+minimap_boarder_thickness)/2)
+
+func update_minimap_display_fast():
+	var player_pos := Vector3i(get_parent().get_global_position()/world_scale)
+	#var minimap_boarder_thickness = 3
+	if player_pos != last_player_pos:
+		last_player_pos = player_pos
+		var rect_pos := Vector2i(player_pos.x - minimap_range, player_pos.z - minimap_range) 
+		var rect_size := Vector2i(2*(minimap_range),2*minimap_range)
+		
+		var subset_rect := Rect2i(rect_pos,rect_size)
+		var subset_img: Image = maximap.get_region(subset_rect)
+
+		var player_color := Color.AQUA
+		var player_icon_size: int = 2
+		subset_img.set_pixel(minimap_range,minimap_range, player_color)
+		
+		for x in range(-player_icon_size, player_icon_size+1):
+			for y in range(-player_icon_size, player_icon_size+1):
+				var pixel_pos = Vector2(minimap_range+x, minimap_range+y)
+				var distance = pixel_pos.distance_to(Vector2(minimap_range, minimap_range))
+				if distance < player_icon_size: subset_img.set_pixel(minimap_range+x,minimap_range+y, player_color)
+				elif distance < player_icon_size+1: subset_img.set_pixel(minimap_range+x,minimap_range+y, Color.BLACK)
+		
+		minimap.texture.update(subset_img) #= new_minimap
 		minimap.pivot_offset = Vector2i(minimap.size.x/2,minimap.size.y/2)
 
 
-func rotate_compass(rot: float): 
-	target_rotation += rot
-	minimap.rotation = target_rotation
+func rotate_compass(rot: float): target_rotation += rot
 
 func prepend_output_text(message): output.text += "- "+str(message)+"\n\n"#+output.text
 

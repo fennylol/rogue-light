@@ -11,8 +11,6 @@ var DUKE = TheDuke
 
 func _ready():DUKE.tick.connect(update_time)
 
-func _process(_delta):pass
-
 func get_tent_position() -> Vector3: return tent.get_global_position()
 
 func update_time(TIME: Vector4i):

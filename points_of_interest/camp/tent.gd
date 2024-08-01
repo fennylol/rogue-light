@@ -9,4 +9,3 @@ func handle_area_entered(body: Node3D):
 	print("set spawn to: ", gp)
 	if body.is_in_group("player") and body.get_spawn_point() != gp: body.set_spawn_point(gp)  
 
-func _process(_delta): pass

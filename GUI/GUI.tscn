@@ -99,8 +99,9 @@ grow_horizontal = 0
 texture = ExtResource("3_fdxp3")
 
 [node name="time_display" type="Label" parent="top/left"]
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
-text = "12:00 AM"
+text = "12:22 AM"
 label_settings = SubResource("LabelSettings_jmy53")
 horizontal_alignment = 2
 uppercase = true

@@ -47,12 +47,12 @@ var EDGE_LENGTH: int
 var MAX_HEIGHT: int
 var heightmap: Array
 var MAP_GRID := GridMap.new()
-const WORLD_SCALE = Vector3(1,1,1)
-const MESH_LIB = preload("res://points_of_interest/the_forest/1m_tiles.tres")
+#const WORLD_SCALE = Vector3(1,1,1)
+#const MESH_LIB = preload("res://points_of_interest/the_forest/1m_tiles.tres")
 #const WORLD_SCALE = Vector3(1,.5,1)
 #const MESH_LIB = preload("res://points_of_interest/the_forest/1m_tiles_half_height.tres")
-#const WORLD_SCALE = Vector3(.5,.25,.5)
-#const MESH_LIB = preload("res://points_of_interest/the_forest/halfm_tiles.tres")
+const WORLD_SCALE = Vector3(.5,.25,.5)
+const MESH_LIB = preload("res://points_of_interest/the_forest/halfm_tiles.tres")
 
 # ROAD
 var PATH_RADIUS: int
@@ -92,7 +92,6 @@ func _init(cs: int = 16, cc: int = 16, mh: int = 40, pr: int = 3, pt: String = "
 
 func get_heightmap(): return heightmap
 func get_map_grid(): return MAP_GRID
-func get_chunk(chunk_coords: Vector2): pass
 func get_road_path(): return road_path
 func get_world_scale(): return WORLD_SCALE
 func get_points_of_interest(): return points_of_interest
@@ -119,6 +118,13 @@ func find_tile_at_point(coords: Vector2) -> String:
 	var answer: String = ""
 	for tile in TILES.keys(): 
 		if TILES[tile] == MAP_GRID.get_cell_item(Vector3(coords.x,heightmap[coords.x][coords.y],coords.y)): 
+			answer = tile
+	return answer
+
+func find_tile_at_point_3(coords: Vector3) -> String:
+	var answer: String = ""
+	for tile in TILES.keys(): 
+		if TILES[tile] == MAP_GRID.get_cell_item(coords): 
 			answer = tile
 	return answer
 
@@ -162,9 +168,100 @@ func generate_map():
 	if TIME_PROFILING: 
 		print("POIs complete: ", snapped(Time.get_unix_time_from_system()-last_time, 0.00001))
 	
+	#create_multimeshs()
 	finished.emit()
 	
 	if TIME_PROFILING: print("total generation time: ", snapped(Time.get_unix_time_from_system()-start_time, 0.00001))
+
+func create_multimeshs() -> Node3D:
+	var start_time: float = Time.get_unix_time_from_system()
+	var last_time: float = start_time
+	
+	var multi_mesh_node = Node3D.new()
+	multi_mesh_node.name = "multimeshes_here"
+	multi_mesh_node.position = Vector3(-0.5,0,-0.5)
+	
+	var multimeshes = {}
+	for i in range(MESH_LIB.get_item_list().size()):
+		var item_name = MESH_LIB.get_item_name(i)
+		var mesh = MESH_LIB.get_item_mesh(i)
+
+		var multimesh = MultiMesh.new()
+		multimesh.transform_format = MultiMesh.TRANSFORM_3D
+		multimesh.mesh = mesh
+		multimesh.instance_count = 0  # We'll set this later
+
+		var multimesh_instance = MultiMeshInstance3D.new()
+		multimesh_instance.multimesh = multimesh
+		multi_mesh_node.add_child(multimesh_instance)
+
+		multimeshes[item_name] = multimesh
+	
+
+	var counts = {}
+	#for x in heightmap.size():
+		#for y in heightmap.size():
+			#var h: int = heightmap[x][y]
+			#var type: String = find_tile_from_height(h)
+	for coords in MAP_GRID.get_used_cells():
+		var type = find_tile_at_point_3(coords)
+		if type not in counts: counts[type] = 0
+		counts[type] += 1
+	
+	for type in counts: 
+		multimeshes[type].instance_count = counts[type]
+	
+	if TIME_PROFILING: 
+		print("mesh counts complete: ", snapped(Time.get_unix_time_from_system()-last_time, 0.00001))
+		last_time = Time.get_unix_time_from_system()
+	
+	var indicies = {}
+	var static_body_node := StaticBody3D.new()
+	
+	#for x in heightmap.size():
+		#for y in heightmap.size():
+			#var h: int = heightmap[x][y]
+			#var type: String = find_tile_from_height(h)
+			#if type not in indicies: indicies[type] = 0
+	#
+			#if type in multimeshes: 
+				#var i = indicies[type]
+				#var transform := Transform3D(Basis.IDENTITY, Vector3(x,h,y)*WORLD_SCALE)
+				#multimeshes[type].set_instance_transform(i, transform)
+				#
+				#var shapes = MESH_LIB.get_item_shapes(TILES[type])
+				#for col_shape in shapes:
+					#if col_shape is Shape3D:
+						#var col_node := CollisionShape3D.new()
+						#col_node.shape = col_shape
+						#col_node.transform = transform
+						#static_body_node.add_child(col_node)
+				#
+				#indicies[type] += 1
+	
+	for coords in MAP_GRID.get_used_cells():
+		var type = find_tile_at_point_3(coords)
+		if type not in indicies: indicies[type] = 0
+		if type in multimeshes: 
+			var i = indicies[type]
+			var transform := Transform3D(Basis.IDENTITY, Vector3(coords)*WORLD_SCALE)
+			multimeshes[type].set_instance_transform(i, transform)
+			
+			var shapes = MESH_LIB.get_item_shapes(TILES[type])
+			for col_shape in shapes:
+				if col_shape is Shape3D:
+					var col_node := CollisionShape3D.new()
+					col_node.shape = col_shape
+					col_node.transform = transform
+					static_body_node.add_child(col_node)
+			
+			indicies[type] += 1
+	
+	
+	multi_mesh_node.add_child(static_body_node)
+	if TIME_PROFILING: print("multimeshing time: ", snapped(Time.get_unix_time_from_system()-start_time, 0.00001))
+	return multi_mesh_node
+
 
 # i believe in Z-UP cry about it
 func set_tile(x, y, z, type, single: bool = false, rot = 0): 
