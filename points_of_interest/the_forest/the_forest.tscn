@@ -46,18 +46,21 @@ transform = Transform3D(-4.35451e-08, 0.0871557, -0.996195, 3.8097e-09, 0.996195
 rotation_order = 5
 light_color = Color(0.972009, 0.464692, 0.43546, 1)
 light_energy = 0.0
+light_bake_mode = 1
 
 [node name="setting" type="DirectionalLight3D" parent="world_parts/lights/static_lights"]
 transform = Transform3D(-4.37114e-08, -0.0871557, 0.996195, 0, 0.996195, 0.0871557, -1, 3.8097e-09, -4.35451e-08, 0, 0, 0)
 rotation_order = 5
 light_color = Color(0.923439, 0.614489, 0, 1)
 light_energy = 0.0
+light_bake_mode = 1
 
 [node name="ambient_light" type="DirectionalLight3D" parent="world_parts/lights/static_lights"]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0)
 rotation_order = 5
 light_color = Color(0.286275, 0.498039, 0.560784, 1)
 light_energy = 0.05
+light_bake_mode = 1
 
 [node name="points_of_interest" type="Node3D" parent="world_parts"]
 

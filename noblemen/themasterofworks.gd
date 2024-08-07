@@ -173,43 +173,57 @@ func generate_map():
 	
 	if TIME_PROFILING: print("total generation time: ", snapped(Time.get_unix_time_from_system()-start_time, 0.00001))
 
+
 func create_multimeshs() -> Node3D:
 	var start_time: float = Time.get_unix_time_from_system()
 	var last_time: float = start_time
 	
-	var multi_mesh_node = Node3D.new()
-	multi_mesh_node.name = "multimeshes_here"
+	var multi_mesh_node := Node3D.new()
+	multi_mesh_node.name = "static_map"
 	multi_mesh_node.position = Vector3(-0.5,0,-0.5)
 	
 	var multimeshes = {}
-	for i in range(MESH_LIB.get_item_list().size()):
-		var item_name = MESH_LIB.get_item_name(i)
-		var mesh = MESH_LIB.get_item_mesh(i)
-
-		var multimesh = MultiMesh.new()
-		multimesh.transform_format = MultiMesh.TRANSFORM_3D
-		multimesh.mesh = mesh
-		multimesh.instance_count = 0  # We'll set this later
-
-		var multimesh_instance = MultiMeshInstance3D.new()
-		multimesh_instance.multimesh = multimesh
-		multi_mesh_node.add_child(multimesh_instance)
-
-		multimeshes[item_name] = multimesh
+	for chunk_x in CHUNK_COUNT:
+		for chunk_y in CHUNK_COUNT:
+			var new_node := Node3D.new()
+			new_node.name = str(chunk_x)+"_"+str(chunk_y)
+			multi_mesh_node.add_child(new_node)
+			if chunk_x not in multimeshes: multimeshes[chunk_x] = {}
+			if chunk_y not in multimeshes[chunk_x]: multimeshes[chunk_x][chunk_y] = {}
+			
+			for i in range(MESH_LIB.get_item_list().size()):
+				var item_name = MESH_LIB.get_item_name(i)
+				var mesh = MESH_LIB.get_item_mesh(i)
+				
+				var multimesh = MultiMesh.new()
+				multimesh.transform_format = MultiMesh.TRANSFORM_3D
+				multimesh.mesh = mesh
+				multimesh.instance_count = 0  # We'll set this later
+				
+				var multimesh_instance = MultiMeshInstance3D.new()
+				multimesh_instance.multimesh = multimesh
+				new_node.add_child(multimesh_instance)
+				multimeshes[chunk_x][chunk_y][item_name] = multimesh
 	
-
 	var counts = {}
-	#for x in heightmap.size():
-		#for y in heightmap.size():
-			#var h: int = heightmap[x][y]
-			#var type: String = find_tile_from_height(h)
 	for coords in MAP_GRID.get_used_cells():
+		var chunk_x = coords.x/CHUNK_SIZE
+		var chunk_y = coords.z/CHUNK_SIZE
 		var type = find_tile_at_point_3(coords)
-		if type not in counts: counts[type] = 0
-		counts[type] += 1
+		
+		if chunk_x == CHUNK_COUNT or chunk_y == CHUNK_COUNT:
+			print(coords)
+		
+		if chunk_x not in counts: counts[chunk_x] = {}
+		if chunk_y not in counts[chunk_x]: counts[chunk_x][chunk_y] = {}
+		if type not in counts[chunk_x][chunk_y]: counts[chunk_x][chunk_y][type] = 0
+		counts[chunk_x][chunk_y][type] += 1
+		#multimeshes[chunk_x][chunk_y][type].instance_count += 1
 	
-	for type in counts: 
-		multimeshes[type].instance_count = counts[type]
+	for chunk_x in counts:
+		for chunk_y in counts[chunk_x]:
+			for type in counts[chunk_x][chunk_y]: 
+				multimeshes[chunk_x][chunk_y][type].instance_count = counts[chunk_x][chunk_y][type]
 	
 	if TIME_PROFILING: 
 		print("mesh counts complete: ", snapped(Time.get_unix_time_from_system()-last_time, 0.00001))
@@ -217,35 +231,19 @@ func create_multimeshs() -> Node3D:
 	
 	var indicies = {}
 	var static_body_node := StaticBody3D.new()
-	
-	#for x in heightmap.size():
-		#for y in heightmap.size():
-			#var h: int = heightmap[x][y]
-			#var type: String = find_tile_from_height(h)
-			#if type not in indicies: indicies[type] = 0
-	#
-			#if type in multimeshes: 
-				#var i = indicies[type]
-				#var transform := Transform3D(Basis.IDENTITY, Vector3(x,h,y)*WORLD_SCALE)
-				#multimeshes[type].set_instance_transform(i, transform)
-				#
-				#var shapes = MESH_LIB.get_item_shapes(TILES[type])
-				#for col_shape in shapes:
-					#if col_shape is Shape3D:
-						#var col_node := CollisionShape3D.new()
-						#col_node.shape = col_shape
-						#col_node.transform = transform
-						#static_body_node.add_child(col_node)
-				#
-				#indicies[type] += 1
-	
+	multi_mesh_node.add_child(static_body_node)
 	for coords in MAP_GRID.get_used_cells():
+		var chunk_x = coords.x/CHUNK_SIZE
+		var chunk_y = coords.z/CHUNK_SIZE
 		var type = find_tile_at_point_3(coords)
-		if type not in indicies: indicies[type] = 0
-		if type in multimeshes: 
-			var i = indicies[type]
+		if chunk_x not in indicies: indicies[chunk_x] = {}
+		if chunk_y not in indicies[chunk_x]: indicies[chunk_x][chunk_y] = {}
+		if type not in indicies[chunk_x][chunk_y]: indicies[chunk_x][chunk_y][type] = 0
+		
+		if type in multimeshes[chunk_x][chunk_y]: 
+			var i = indicies[chunk_x][chunk_y][type]
 			var transform := Transform3D(Basis.IDENTITY, Vector3(coords)*WORLD_SCALE)
-			multimeshes[type].set_instance_transform(i, transform)
+			multimeshes[chunk_x][chunk_y][type].set_instance_transform(i, transform)
 			
 			var shapes = MESH_LIB.get_item_shapes(TILES[type])
 			for col_shape in shapes:
@@ -255,10 +253,8 @@ func create_multimeshs() -> Node3D:
 					col_node.transform = transform
 					static_body_node.add_child(col_node)
 			
-			indicies[type] += 1
-	
-	
-	multi_mesh_node.add_child(static_body_node)
+			indicies[chunk_x][chunk_y][type] += 1
+
 	if TIME_PROFILING: print("multimeshing time: ", snapped(Time.get_unix_time_from_system()-start_time, 0.00001))
 	return multi_mesh_node
 
@@ -528,10 +524,7 @@ func find_flat_spawn_location(size: int, spawn_attempts: int, poi_spacing: float
 	valid_points.sort_custom(sort_by_size_then_flatness)
 	valid_points = valid_points.map(convert_to_vec3)
 
-	while valid_points.size() > 0 and point_is_near_POI(valid_points[0], poi_spacing):
-		set_tile(valid_points[0].x,valid_points[0].z+5,valid_points[0].y, "WHITE")
-		valid_points.pop_front()
-	
+	while valid_points.size() > 0 and point_is_near_POI(valid_points[0], poi_spacing): valid_points.pop_front()
 	return valid_points[0] if valid_points.size() else Vector3.ZERO
 
 func height_avg_and_dev(coords: Vector2, search_range: int):

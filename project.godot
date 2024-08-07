@@ -171,3 +171,4 @@ textures/canvas_textures/default_texture_filter=0
 lights_and_shadows/directional_shadow/size=16384
 lights_and_shadows/directional_shadow/soft_shadow_filter_quality=5
 lights_and_shadows/positional_shadow/soft_shadow_filter_quality=5
+occlusion_culling/use_occlusion_culling=true

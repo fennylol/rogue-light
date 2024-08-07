@@ -27,8 +27,8 @@ var Caravan = preload("res://entities/caravan/caravan.gd")
 
 
 ### WORLD GEN PARAMETERS ###
-const CHUNK_SIZE: int = 64
-const CHUNK_COUNT: int = 16
+const CHUNK_SIZE: int = 32
+const CHUNK_COUNT: int = 32
 const MAX_HEIGHT: int = 255
 const PATH_RADIUS: int = 3 #dist past the centerline on either side. path will be 2r+1 tiles wide
 const PATH_TILE: String = "PATH"
@@ -36,6 +36,7 @@ const DEBUG_MODE: bool = false
 var MASTER_OF_WORKS := MasterOfWorks.new()
 var CARTOGRAPHER := Cartographer.new()
 const KILL_HEIGHT = -10
+const USE_MULTIMESH_MAP: bool = true
 
 ### CAMERA PARAMETERS ###
 const CAM_SIZE: float = 20
@@ -73,7 +74,7 @@ func _process(delta):
 		move_player(false,false, MASTER_OF_WORKS.get_world_scale(), PLAYER.get_spawn_point())
 		PLAYER.take_damage()
 	
-	var fade_material: Material = MAP_GRID.mesh_library.get_item_mesh(ARCHIVIST.TILE_NAMES["TALL_PINE"]).surface_get_material(0)
+	var fade_material: Material = MASTER_OF_WORKS.get_map_grid().mesh_library.get_item_mesh(ARCHIVIST.TILE_NAMES["TALL_PINE"]).surface_get_material(0)
 	if fade_material is ShaderMaterial:
 		fade_material.set_shader_parameter("player_position", PLAYER.global_transform.origin)
 		fade_material.set_shader_parameter("camera_position", CAMERA.get_child(0).global_transform.origin)
@@ -83,7 +84,7 @@ func _process(delta):
 		shader_material.shader = preload("res://points_of_interest/the_forest/trees/tree_fade.gdshader")
 		var texture = preload("res://points_of_interest/the_forest/trees/tall_pine.png")
 		shader_material.set_shader_parameter("albedo_texture", texture)
-		MAP_GRID.mesh_library.get_item_mesh(ARCHIVIST.TILE_NAMES["TALL_PINE"]).surface_set_material(0, shader_material)
+		MASTER_OF_WORKS.get_map_grid().mesh_library.get_item_mesh(ARCHIVIST.TILE_NAMES["TALL_PINE"]).surface_set_material(0, shader_material)
 
 
 func process_world_tick(TIME: Vector4i):
@@ -156,13 +157,9 @@ func generate_map(r: bool = true, s: bool = true):
 		move_player(r,s, MASTER_OF_WORKS.get_world_scale())
 		MAP_GRID.queue_free()
 		for i in POINTS_OF_INTEREST.get_child_count(): POINTS_OF_INTEREST.get_child(i).queue_free()
-		MAP_GRID = MASTER_OF_WORKS.get_map_grid()
-		#WORLD.add_child(MAP_GRID)
-		#MAP_GRID = Node3D.new()
-		#var meshes = MASTER_OF_WORKS.get_map_grid().make_baked_meshes()
-		#for mesh_instance in meshes:
-			#MAP_GRID.add_child(mesh_instance)
-		#WORLD.add_child(MAP_GRID)
+		
+		MAP_GRID = MASTER_OF_WORKS.create_multimeshs() if USE_MULTIMESH_MAP else MASTER_OF_WORKS.get_map_grid()
+		WORLD.add_child(MAP_GRID)
 		
 		#place poi scenes on their spots
 		for poi in MASTER_OF_WORKS.get_points_of_interest():
@@ -173,14 +170,10 @@ func generate_map(r: bool = true, s: bool = true):
 			scene.rotation.y = FOOL.range_f(0, 2*PI)
 			if poi[MASTER_OF_WORKS.NAME] == "camp": 
 				PLAYER.set_spawn_point(scene.get_tent_position())#poi[MASTER_OF_WORKS.COORDS]
-				move_player(r, s, MASTER_OF_WORKS.get_world_scale(), PLAYER.get_spawn_point())
+				move_player(r, s, MASTER_OF_WORKS.get_world_scale(), PLAYER.get_spawn_point()+Vector3(0,1,0))
 		
 		# generate and pass minimap
-		PLAYER.set_full_minimap(CARTOGRAPHER.make_minimap(MAP_GRID, Vector3(CHUNK_COUNT*CHUNK_SIZE,MAX_HEIGHT,CHUNK_COUNT*CHUNK_SIZE)), MASTER_OF_WORKS.get_world_scale())
-		
-		#multimesh tomfoolery
-		var mm = MASTER_OF_WORKS.create_multimeshs()
-		WORLD.add_child(mm)
+		PLAYER.set_full_minimap(CARTOGRAPHER.make_minimap(MASTER_OF_WORKS.get_map_grid(), Vector3(CHUNK_COUNT*CHUNK_SIZE,MAX_HEIGHT,CHUNK_COUNT*CHUNK_SIZE)), MASTER_OF_WORKS.get_world_scale())
 	
 	MASTER_OF_WORKS = MasterOfWorks.new(CHUNK_SIZE, CHUNK_COUNT, MAX_HEIGHT, PATH_RADIUS, PATH_TILE, DEBUG_MODE)
 	MASTER_OF_WORKS.finished.connect(on_map_generation_finished)
